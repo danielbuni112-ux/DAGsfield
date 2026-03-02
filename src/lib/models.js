@@ -2161,6 +2161,16 @@ export const t2vModels = [
     }
   },
   {
+    "id": "seedance-v2.0-t2v",
+    "name": "Seedance 2.0",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt", "description": "The prompt to generate the video" },
+      "aspect_ratio": { "enum": ["16:9", "9:16", "4:3", "3:4"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" },
+      "duration": { "enum": [5, 10, 15], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 5 },
+      "quality": { "enum": ["high", "basic"], "title": "Quality", "name": "quality", "type": "string", "description": "Quality of the generated video.", "default": "basic" }
+    }
+  },
+  {
     "id": "kling-v2.1-master-t2v",
     "name": "Kling v2.1 Master",
     "inputs": {
