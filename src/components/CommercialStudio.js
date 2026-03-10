@@ -2,6 +2,7 @@ import { muapi } from '../lib/muapi.js';
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { createInlineInstructions } from './InlineInstructions.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 const SCENE_PRESETS = [
   'Studio white background', 'Luxury marble surface', 'Outdoor natural light',
@@ -26,14 +27,15 @@ export function CommercialStudio() {
   let selectedModel = 'ai-product-shot';
 
   const header = document.createElement('div');
-  header.className = 'mb-8 animate-fade-in-up text-center';
-  header.innerHTML = `
-    <div class="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 mb-4 mx-auto">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-emerald-400"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-    </div>
-    <h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">Commercial Studio</h1>
-    <p class="text-secondary text-sm max-w-md mx-auto">AI product photography, ads, and commercial content</p>
-  `;
+  header.className = 'mb-8 animate-fade-in-up text-center w-full max-w-xl';
+  const commBanner = createHeroSection('commercial', 'h-36 md:h-48 mb-4');
+  if (commBanner) {
+    const bannerText = document.createElement('div');
+    bannerText.className = 'absolute bottom-0 left-0 right-0 p-5 z-10';
+    bannerText.innerHTML = '<h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">Commercial Studio</h1><p class="text-white/60 text-sm max-w-md">AI product photography, ads, and commercial content</p>';
+    commBanner.appendChild(bannerText);
+    header.appendChild(commBanner);
+  }
   container.appendChild(header);
 
   const formCard = document.createElement('div');

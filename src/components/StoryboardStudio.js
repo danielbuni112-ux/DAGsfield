@@ -1,6 +1,7 @@
 import { muapi } from '../lib/muapi.js';
 import { AuthModal } from './AuthModal.js';
 import { createInlineInstructions } from './InlineInstructions.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 const SHOT_TYPES = ['Wide Shot', 'Medium Shot', 'Close-Up', 'Extreme Close-Up', 'POV', 'Overhead', 'Low Angle'];
 
@@ -10,10 +11,16 @@ export function StoryboardStudio() {
 
   const topBar = document.createElement('div');
   topBar.className = 'px-4 md:px-8 pt-6 pb-4 shrink-0';
-  topBar.innerHTML = `
-    <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Storyboard Studio</h1>
-    <p class="text-secondary text-xs mb-4">Plan your scenes with AI-generated storyboard frames</p>
-  `;
+  const storyBanner = createHeroSection('storyboard', 'h-32 md:h-44 mb-4');
+  if (storyBanner) {
+    const bannerText = document.createElement('div');
+    bannerText.className = 'absolute bottom-0 left-0 right-0 p-4 z-10';
+    bannerText.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Storyboard Studio</h1><p class="text-white/60 text-xs">Plan your scenes with AI-generated storyboard frames</p>';
+    storyBanner.appendChild(bannerText);
+    topBar.appendChild(storyBanner);
+  } else {
+    topBar.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Storyboard Studio</h1><p class="text-secondary text-xs mb-4">Plan your scenes with AI-generated storyboard frames</p>';
+  }
   const inlineInstructions = createInlineInstructions('storyboard');
   inlineInstructions.classList.add('px-4', 'md:px-8', 'mt-2');
   topBar.appendChild(inlineInstructions);

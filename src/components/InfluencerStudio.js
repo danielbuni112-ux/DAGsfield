@@ -1,6 +1,7 @@
 import { muapi } from '../lib/muapi.js';
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 const STYLE_PRESETS = [
   'Realistic', 'DigitalCam', 'Quiet luxury', 'FashionShow', '90s Grain', 'Sunset beach',
@@ -25,12 +26,15 @@ export function InfluencerStudio() {
   let selectedFormat = FORMAT_PRESETS[0];
 
   const header = document.createElement('div');
-  header.className = 'mb-8 animate-fade-in-up text-center';
-  header.innerHTML = `
-    <div class="w-16 h-16 bg-pink-500/10 rounded-2xl flex items-center justify-center border border-pink-500/20 mb-4 mx-auto text-3xl">&#128248;</div>
-    <h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">AI Influencer Studio</h1>
-    <p class="text-secondary text-sm max-w-md mx-auto">Generate social content with 20+ fashion presets and format templates</p>
-  `;
+  header.className = 'mb-8 animate-fade-in-up text-center w-full max-w-xl';
+  const influBanner = createHeroSection('influencer', 'h-36 md:h-48 mb-4');
+  if (influBanner) {
+    const bannerText = document.createElement('div');
+    bannerText.className = 'absolute bottom-0 left-0 right-0 p-5 z-10';
+    bannerText.innerHTML = '<h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">AI Influencer Studio</h1><p class="text-white/60 text-sm max-w-md">Generate social content with 20+ fashion presets and format templates</p>';
+    influBanner.appendChild(bannerText);
+    header.appendChild(influBanner);
+  }
   container.appendChild(header);
 
   const formCard = document.createElement('div');

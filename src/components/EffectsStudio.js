@@ -4,6 +4,7 @@ import { createUploadPicker } from './UploadPicker.js';
 import { createMediaPreview, createFullscreenPreview } from './MediaPreview.js';
 import { createInlineInstructions } from './InlineInstructions.js';
 import { i2iModels, i2vModels } from '../lib/models.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 const EFFECT_TABS = [
   { id: 'image-effects', label: 'Image Effects', type: 'i2i', field: 'name' },
@@ -36,10 +37,16 @@ export function EffectsStudio() {
 
   const topBar = document.createElement('div');
   topBar.className = 'px-4 md:px-8 pt-6 pb-4 shrink-0';
-  topBar.innerHTML = `
-    <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Effects Studio</h1>
-    <p class="text-secondary text-xs mb-4">Apply 350+ visual effects to your photos and videos</p>
-  `;
+  const effectsBanner = createHeroSection('effects', 'h-32 md:h-44 mb-4');
+  if (effectsBanner) {
+    const bannerText = document.createElement('div');
+    bannerText.className = 'absolute bottom-0 left-0 right-0 p-4 z-10';
+    bannerText.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Effects Studio</h1><p class="text-white/60 text-xs">Apply 350+ visual effects to your photos and videos</p>';
+    effectsBanner.appendChild(bannerText);
+    topBar.appendChild(effectsBanner);
+  } else {
+    topBar.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Effects Studio</h1><p class="text-secondary text-xs mb-4">Apply 350+ visual effects to your photos and videos</p>';
+  }
 
   const tabRow = document.createElement('div');
   tabRow.className = 'flex gap-2 overflow-x-auto no-scrollbar pb-2';

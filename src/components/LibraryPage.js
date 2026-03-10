@@ -1,3 +1,5 @@
+import { getPageThumbnail, createThumbnailImg } from '../lib/thumbnails.js';
+
 export function LibraryPage() {
   const container = document.createElement('div');
   container.className = 'w-full h-full flex flex-col bg-app-bg overflow-hidden';
@@ -7,10 +9,24 @@ export function LibraryPage() {
 
   const topBar = document.createElement('div');
   topBar.className = 'px-4 md:px-8 pt-6 pb-4 shrink-0';
-  topBar.innerHTML = `
-    <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Library</h1>
-    <p class="text-secondary text-xs mb-4">All your generated images and videos</p>
-  `;
+  const libThumb = getPageThumbnail('library');
+  if (libThumb) {
+    const bannerWrapper = document.createElement('div');
+    bannerWrapper.className = 'relative w-full h-32 md:h-44 rounded-2xl overflow-hidden mb-4';
+    bannerWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
+    const img = createThumbnailImg(libThumb, 'Library', 'w-full h-full object-cover');
+    bannerWrapper.appendChild(img);
+    const overlay = document.createElement('div');
+    overlay.className = 'absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent';
+    bannerWrapper.appendChild(overlay);
+    const textOverlay = document.createElement('div');
+    textOverlay.className = 'absolute bottom-0 left-0 right-0 p-4 z-10';
+    textOverlay.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Library</h1><p class="text-white/60 text-xs">All your generated images and videos</p>';
+    bannerWrapper.appendChild(textOverlay);
+    topBar.appendChild(bannerWrapper);
+  } else {
+    topBar.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Library</h1><p class="text-secondary text-xs mb-4">All your generated images and videos</p>';
+  }
 
   const controls = document.createElement('div');
   controls.className = 'flex items-center gap-3 flex-wrap';

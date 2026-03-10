@@ -4,6 +4,7 @@ import { CameraControls } from './CameraControls.js';
 import { buildNanoBananaPrompt, CAMERA_MAP, LENS_MAP } from '../lib/promptUtils.js';
 import { AuthModal } from './AuthModal.js';
 import { createInlineInstructions } from './InlineInstructions.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 export function CinemaStudio() {
     const container = document.createElement('div');
@@ -23,13 +24,20 @@ export function CinemaStudio() {
     // 1. HERO SECTION (Empty State)
     // ==========================================
     const heroSection = document.createElement('div');
-    heroSection.className = 'flex flex-col items-center justify-center text-center px-4 animate-fade-in-up';
-    heroSection.innerHTML = `
-        <div class="mb-4 text-xs font-bold text-white/40 tracking-[0.2em] uppercase">Cinema Studio 2.0</div>
-        <h1 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tight leading-tight mb-2">
-            What would you shoot<br>with infinite budget?
-        </h1>
-    `;
+    heroSection.className = 'flex flex-col items-center justify-center text-center px-4 animate-fade-in-up w-full max-w-4xl';
+    const cinemaBanner = createHeroSection('cinema', 'h-44 md:h-64 mb-6');
+    if (cinemaBanner) {
+        const bannerContent = document.createElement('div');
+        bannerContent.className = 'absolute bottom-0 left-0 right-0 p-6 z-10 text-left';
+        bannerContent.innerHTML = `
+            <div class="mb-2 text-xs font-bold text-white/40 tracking-[0.2em] uppercase">Cinema Studio 2.0</div>
+            <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                What would you shoot<br>with infinite budget?
+            </h1>
+        `;
+        cinemaBanner.appendChild(bannerContent);
+        heroSection.appendChild(cinemaBanner);
+    }
     container.appendChild(heroSection);
 
     const inlineInstructions = createInlineInstructions('cinema');

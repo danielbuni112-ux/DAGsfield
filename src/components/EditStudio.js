@@ -2,6 +2,7 @@ import { muapi } from '../lib/muapi.js';
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { createInlineInstructions } from './InlineInstructions.js';
+import { createHeroSection, getToolThumbnail, createThumbnailImg } from '../lib/thumbnails.js';
 
 const EDIT_TOOLS = [
   { id: 'ai-object-eraser', name: 'Remove Object', description: 'Erase unwanted objects from images', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 5H9l-7 7 7 7h11a2 2 0 002-2V7a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>', hasPrompt: true, promptPlaceholder: 'What to remove...' },
@@ -24,22 +25,39 @@ export function EditStudio() {
 
   const topBar = document.createElement('div');
   topBar.className = 'px-4 md:px-8 pt-6 pb-4 shrink-0';
-  topBar.innerHTML = `
-    <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Edit Studio</h1>
-    <p class="text-secondary text-xs mb-5">9 AI-powered editing tools for images</p>
-  `;
+  const editBanner = createHeroSection('edit', 'h-32 md:h-44 mb-4');
+  if (editBanner) {
+    const bannerText = document.createElement('div');
+    bannerText.className = 'absolute bottom-0 left-0 right-0 p-4 z-10';
+    bannerText.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Edit Studio</h1><p class="text-white/60 text-xs">9 AI-powered editing tools for images</p>';
+    editBanner.appendChild(bannerText);
+    topBar.appendChild(editBanner);
+  } else {
+    topBar.innerHTML = '<h1 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">Edit Studio</h1><p class="text-secondary text-xs mb-5">9 AI-powered editing tools for images</p>';
+  }
 
   const toolGrid = document.createElement('div');
   toolGrid.className = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2';
 
   EDIT_TOOLS.forEach(tool => {
     const card = document.createElement('div');
-    card.className = 'bg-white/[0.03] border border-white/5 rounded-xl p-3 cursor-pointer hover:bg-white/[0.06] hover:border-white/10 transition-all group';
-    card.innerHTML = `
-      <div class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-secondary group-hover:text-primary transition-colors mb-2">${tool.icon}</div>
+    card.className = 'bg-white/[0.03] border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:bg-white/[0.06] hover:border-white/10 transition-all group';
+    const thumbSrc = getToolThumbnail(tool.id);
+    if (thumbSrc) {
+      const thumbWrapper = document.createElement('div');
+      thumbWrapper.className = 'thumb-hero h-20 relative';
+      thumbWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
+      const img = createThumbnailImg(thumbSrc, tool.name, 'w-full h-full object-cover');
+      thumbWrapper.appendChild(img);
+      card.appendChild(thumbWrapper);
+    }
+    const info = document.createElement('div');
+    info.className = 'p-3';
+    info.innerHTML = `
       <div class="text-xs font-bold text-white group-hover:text-primary transition-colors">${tool.name}</div>
       <div class="text-[10px] text-muted mt-0.5">${tool.description}</div>
     `;
+    card.appendChild(info);
     card.onclick = () => selectTool(tool, card);
     toolGrid.appendChild(card);
   });

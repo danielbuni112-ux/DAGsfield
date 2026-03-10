@@ -2,6 +2,7 @@ import { muapi } from '../lib/muapi.js';
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { createInlineInstructions } from './InlineInstructions.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 const UPSCALE_METHODS = [
   { id: 'ai-image-upscaler', name: 'AI Upscaler', description: 'General-purpose AI upscaling with 2x/4x factor', factors: ['2', '4'] },
@@ -18,11 +19,15 @@ export function UpscaleStudio() {
   let uploadedUrl = null;
 
   const header = document.createElement('div');
-  header.className = 'mb-8 animate-fade-in-up text-center';
-  header.innerHTML = `
-    <h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">Upscale Suite</h1>
-    <p class="text-secondary text-sm">Enhance and upscale images with 3 AI methods</p>
-  `;
+  header.className = 'mb-8 animate-fade-in-up text-center w-full max-w-xl';
+  const upscaleBanner = createHeroSection('upscale', 'h-36 md:h-48 mb-4');
+  if (upscaleBanner) {
+    const bannerText = document.createElement('div');
+    bannerText.className = 'absolute bottom-0 left-0 right-0 p-5 z-10';
+    bannerText.innerHTML = '<h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">Upscale Suite</h1><p class="text-white/60 text-sm">Enhance and upscale images with 3 AI methods</p>';
+    upscaleBanner.appendChild(bannerText);
+    header.appendChild(upscaleBanner);
+  }
   container.appendChild(header);
 
   const methodRow = document.createElement('div');

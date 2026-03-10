@@ -1,5 +1,6 @@
 import { navigate } from '../lib/router.js';
 import { templates, TEMPLATE_CATEGORIES } from '../lib/templates.js';
+import { getTemplateThumbnail, getCategoryThumbnail, createThumbnailImg } from '../lib/thumbnails.js';
 
 const CURATED_PROMPTS = [
   { prompt: 'A samurai standing in cherry blossom rain, cinematic lighting, epic composition', model: 'nano-banana', category: 'Cinematic' },
@@ -41,12 +42,21 @@ export function ExplorePage() {
   const trending = templates.slice(0, 8);
   trending.forEach(t => {
     const card = document.createElement('div');
-    card.className = 'bg-white/[0.03] border border-white/5 rounded-xl p-4 cursor-pointer hover:bg-white/[0.06] hover:border-white/10 transition-all group';
-    card.innerHTML = `
-      <div class="text-2xl mb-2">${t.icon}</div>
+    card.className = 'bg-white/[0.03] border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:bg-white/[0.06] hover:border-white/10 transition-all group';
+    const thumbSrc = getTemplateThumbnail(t.id);
+    const heroWrapper = document.createElement('div');
+    heroWrapper.className = 'thumb-hero h-28 relative';
+    heroWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
+    const img = createThumbnailImg(thumbSrc, t.name, 'w-full h-full object-cover');
+    heroWrapper.appendChild(img);
+    card.appendChild(heroWrapper);
+    const info = document.createElement('div');
+    info.className = 'p-3';
+    info.innerHTML = `
       <div class="text-sm font-bold text-white group-hover:text-primary transition-colors">${t.name}</div>
       <div class="text-xs text-muted mt-0.5">${t.description}</div>
     `;
+    card.appendChild(info);
     card.onclick = () => navigate(`template/${t.id}`);
     trendingGrid.appendChild(card);
   });
@@ -89,11 +99,23 @@ export function ExplorePage() {
   Object.values(TEMPLATE_CATEGORIES).forEach(cat => {
     const count = templates.filter(t => t.category === cat).length;
     const card = document.createElement('div');
-    card.className = 'bg-white/[0.03] border border-white/5 rounded-xl p-4 cursor-pointer hover:bg-white/[0.06] hover:border-white/10 transition-all';
-    card.innerHTML = `
-      <div class="text-sm font-bold text-white">${cat}</div>
+    card.className = 'bg-white/[0.03] border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:bg-white/[0.06] hover:border-white/10 transition-all group';
+    const catThumb = getCategoryThumbnail(cat);
+    if (catThumb) {
+      const heroWrapper = document.createElement('div');
+      heroWrapper.className = 'thumb-hero h-24 relative';
+      heroWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
+      const img = createThumbnailImg(catThumb, cat, 'w-full h-full object-cover');
+      heroWrapper.appendChild(img);
+      card.appendChild(heroWrapper);
+    }
+    const info = document.createElement('div');
+    info.className = 'p-3';
+    info.innerHTML = `
+      <div class="text-sm font-bold text-white group-hover:text-primary transition-colors">${cat}</div>
       <div class="text-xs text-muted mt-1">${count} templates</div>
     `;
+    card.appendChild(info);
     card.onclick = () => navigate('apps');
     catGrid.appendChild(card);
   });

@@ -1,5 +1,6 @@
 import { navigate } from '../lib/router.js';
 import { buildNanoBananaPrompt, CAMERA_MAP, LENS_MAP } from '../lib/promptUtils.js';
+import { getPageThumbnail, createThumbnailImg } from '../lib/thumbnails.js';
 
 const ENHANCE_TAGS = {
   quality: ['professional photography', 'ultra-detailed', '8K resolution', 'high dynamic range', 'award-winning'],
@@ -26,12 +27,25 @@ export function AssistPage() {
   const inner = document.createElement('div');
   inner.className = 'max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12';
 
-  inner.innerHTML = `
-    <div class="mb-10 animate-fade-in-up">
-      <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-3">Assist</h1>
-      <p class="text-secondary text-sm md:text-base max-w-xl">AI prompt enhancement, quick starters, and creative tools</p>
-    </div>
-  `;
+  const heroBlock = document.createElement('div');
+  heroBlock.className = 'mb-10 animate-fade-in-up';
+  const assistThumb = getPageThumbnail('assist');
+  if (assistThumb) {
+    const bannerWrapper = document.createElement('div');
+    bannerWrapper.className = 'relative w-full h-36 md:h-48 rounded-2xl overflow-hidden mb-6';
+    bannerWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
+    const img = createThumbnailImg(assistThumb, 'Assist', 'w-full h-full object-cover');
+    bannerWrapper.appendChild(img);
+    const overlay = document.createElement('div');
+    overlay.className = 'absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent';
+    bannerWrapper.appendChild(overlay);
+    const textOverlay = document.createElement('div');
+    textOverlay.className = 'absolute bottom-0 left-0 right-0 p-5 z-10';
+    textOverlay.innerHTML = '<h1 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">Assist</h1><p class="text-white/60 text-sm md:text-base max-w-xl">AI prompt enhancement, quick starters, and creative tools</p>';
+    bannerWrapper.appendChild(textOverlay);
+    heroBlock.appendChild(bannerWrapper);
+  }
+  inner.appendChild(heroBlock);
 
   const enhanceSection = document.createElement('div');
   enhanceSection.className = 'mb-10 animate-fade-in-up';

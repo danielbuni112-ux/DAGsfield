@@ -2,6 +2,7 @@ import { muapi } from '../lib/muapi.js';
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { createInlineInstructions } from './InlineInstructions.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 const CHARACTER_MODELS = [
   { id: 'flux-pulid', name: 'Flux PuLID', description: 'Face ID preservation with text prompt' },
@@ -16,14 +17,15 @@ export function CharacterStudio() {
   let selectedModel = CHARACTER_MODELS[0];
 
   const header = document.createElement('div');
-  header.className = 'mb-8 animate-fade-in-up text-center';
-  header.innerHTML = `
-    <div class="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20 mb-4 mx-auto">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-rose-400"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    </div>
-    <h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">Character Studio</h1>
-    <p class="text-secondary text-sm max-w-md mx-auto">Generate consistent character images using face ID preservation</p>
-  `;
+  header.className = 'mb-8 animate-fade-in-up text-center w-full max-w-lg';
+  const charBanner = createHeroSection('character', 'h-36 md:h-48 mb-4');
+  if (charBanner) {
+    const bannerText = document.createElement('div');
+    bannerText.className = 'absolute bottom-0 left-0 right-0 p-5 z-10';
+    bannerText.innerHTML = '<h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">Character Studio</h1><p class="text-white/60 text-sm max-w-md">Generate consistent character images using face ID preservation</p>';
+    charBanner.appendChild(bannerText);
+    header.appendChild(charBanner);
+  }
   container.appendChild(header);
 
   const formCard = document.createElement('div');

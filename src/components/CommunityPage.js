@@ -1,3 +1,5 @@
+import { getPageThumbnail, createThumbnailImg } from '../lib/thumbnails.js';
+
 export function CommunityPage() {
   const container = document.createElement('div');
   container.className = 'w-full h-full overflow-y-auto bg-app-bg';
@@ -5,12 +7,25 @@ export function CommunityPage() {
   const inner = document.createElement('div');
   inner.className = 'max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12';
 
-  inner.innerHTML = `
-    <div class="mb-10 animate-fade-in-up">
-      <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-3">Community</h1>
-      <p class="text-secondary text-sm md:text-base max-w-xl">Connect, share, and collaborate with fellow creators</p>
-    </div>
-  `;
+  const heroBlock = document.createElement('div');
+  heroBlock.className = 'mb-10 animate-fade-in-up';
+  const communityThumb = getPageThumbnail('community');
+  if (communityThumb) {
+    const bannerWrapper = document.createElement('div');
+    bannerWrapper.className = 'relative w-full h-40 md:h-56 rounded-2xl overflow-hidden mb-6';
+    bannerWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
+    const img = createThumbnailImg(communityThumb, 'Community', 'w-full h-full object-cover');
+    bannerWrapper.appendChild(img);
+    const overlay = document.createElement('div');
+    overlay.className = 'absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent';
+    bannerWrapper.appendChild(overlay);
+    const textOverlay = document.createElement('div');
+    textOverlay.className = 'absolute bottom-0 left-0 right-0 p-6 z-10';
+    textOverlay.innerHTML = '<h1 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">Community</h1><p class="text-white/60 text-sm md:text-base max-w-xl">Connect, share, and collaborate with fellow creators</p>';
+    bannerWrapper.appendChild(textOverlay);
+    heroBlock.appendChild(bannerWrapper);
+  }
+  inner.appendChild(heroBlock);
 
   const linksSection = document.createElement('div');
   linksSection.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12 animate-fade-in-up';

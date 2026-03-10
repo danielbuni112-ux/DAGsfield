@@ -7,6 +7,7 @@ import {
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { createInlineInstructions } from './InlineInstructions.js';
+import { createHeroSection } from '../lib/thumbnails.js';
 
 export function ImageStudio() {
     const container = document.createElement('div');
@@ -30,28 +31,18 @@ export function ImageStudio() {
     // 1. HERO SECTION
     // ==========================================
     const hero = document.createElement('div');
-    hero.className = 'flex flex-col items-center mb-10 md:mb-20 animate-fade-in-up transition-all duration-700';
-    hero.innerHTML = `
-        <div class="mb-10 relative group">
-             <div class="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000"></div>
-             <div class="relative w-24 h-24 md:w-32 md:h-32 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-primary opacity-20 absolute -right-4 -bottom-4">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                </svg>
-                <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-glow relative z-10">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-primary">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                </div>
-                <!-- Sparkles -->
-                <div class="absolute top-4 right-4 text-primary animate-pulse">✨</div>
-             </div>
-        </div>
-        <h1 class="text-2xl sm:text-4xl md:text-7xl font-black text-white tracking-widest uppercase mb-4 selection:bg-primary selection:text-black text-center px-4">Image Studio</h1>
-        <p class="text-secondary text-sm font-medium tracking-wide opacity-60">Transform images with AI — upscale, stylize, animate and more</p>
-    `;
+    hero.className = 'flex flex-col items-center mb-10 md:mb-20 animate-fade-in-up transition-all duration-700 w-full max-w-4xl';
+    const heroBanner = createHeroSection('image', 'h-40 md:h-56 mb-6');
+    if (heroBanner) {
+        const heroContent = document.createElement('div');
+        heroContent.className = 'absolute bottom-0 left-0 right-0 p-6 z-10';
+        heroContent.innerHTML = `
+            <h1 class="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight mb-1">Image Studio</h1>
+            <p class="text-white/60 text-sm font-medium">Transform images with AI — upscale, stylize, animate and more</p>
+        `;
+        heroBanner.appendChild(heroContent);
+        hero.appendChild(heroBanner);
+    }
     container.appendChild(hero);
 
     // ==========================================
