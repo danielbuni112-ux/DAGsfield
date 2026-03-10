@@ -17,7 +17,7 @@ const TOOL_STUDIOS = [
   { id: 'commercial', name: 'Commercial Studio', description: 'Product photography and ads', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>', badge: 'Ads', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 ];
 
-export function AppsHub() {
+export function AppsHub({ scrollToTemplates = false } = {}) {
   const container = document.createElement('div');
   container.className = 'w-full h-full overflow-y-auto bg-app-bg';
 
@@ -58,13 +58,24 @@ export function AppsHub() {
   })), true));
 
   const categories = getAllCategories();
-  categories.forEach(cat => {
+  let templatesAnchor = null;
+  categories.forEach((cat, i) => {
     const catTemplates = templates.filter(t => t.category === cat);
     const section = createTemplateSection(cat, catTemplates);
+    if (i === 0) {
+      section.id = 'templates-section';
+      templatesAnchor = section;
+    }
     inner.appendChild(section);
   });
 
   container.appendChild(inner);
+
+  if (scrollToTemplates && templatesAnchor) {
+    requestAnimationFrame(() => {
+      templatesAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   searchInput.oninput = () => {
     const q = searchInput.value.toLowerCase();

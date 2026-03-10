@@ -10,7 +10,7 @@ const ROUTE_MAP = {
   'Cinema Studio': 'cinema',
   'AI Influencer': 'influencer',
   'Apps': 'apps',
-  'Templates': 'apps',
+  'Templates': 'templates',
   'Assist': 'assist',
   'Community': 'community',
 };
@@ -24,6 +24,7 @@ const pageLoaders = {
   video: () => import('../components/VideoStudio.js').then(m => m.VideoStudio()),
   cinema: () => import('../components/CinemaStudio.js').then(m => m.CinemaStudio()),
   apps: () => import('../components/AppsHub.js').then(m => m.AppsHub()),
+  templates: () => import('../components/AppsHub.js').then(m => m.AppsHub({ scrollToTemplates: true })),
   effects: () => import('../components/EffectsStudio.js').then(m => m.EffectsStudio()),
   edit: () => import('../components/EditStudio.js').then(m => m.EditStudio()),
   upscale: () => import('../components/UpscaleStudio.js').then(m => m.UpscaleStudio()),
