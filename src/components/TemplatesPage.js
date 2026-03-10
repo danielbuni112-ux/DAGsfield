@@ -131,7 +131,7 @@ function createTemplateSection(category, catTemplates) {
     const thumbnail = getTemplateThumbnail(t.id);
     if (thumbnail) {
       const heroWrapper = document.createElement('div');
-      heroWrapper.className = 'thumb-hero h-20';
+      heroWrapper.className = 'thumb-hero h-32';
 
       const skeleton = document.createElement('div');
       skeleton.className = 'thumb-skeleton absolute inset-0';

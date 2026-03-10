@@ -3,6 +3,7 @@ import { muapi } from '../lib/muapi.js';
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { navigate } from '../lib/router.js';
+import { getTemplateThumbnail, createThumbnailImg } from '../lib/thumbnails.js';
 
 export function TemplateStudio(templateId) {
   const template = getTemplateById(templateId);
@@ -21,16 +22,46 @@ export function TemplateStudio(templateId) {
   container.appendChild(backBtn);
 
   const header = document.createElement('div');
-  header.className = 'flex flex-col items-center mb-8 animate-fade-in-up';
-  header.innerHTML = `
-    <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 mb-4 text-3xl">${template.icon}</div>
-    <h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2 text-center">${template.name}</h1>
-    <p class="text-secondary text-sm max-w-md text-center">${template.description}</p>
-    <div class="flex gap-2 mt-3">
-      <span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${template.outputType === 'video' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-primary/10 text-primary border border-primary/20'}">${template.outputType === 'video' ? 'Video' : 'Image'}</span>
-      <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/5 text-secondary border border-white/10">${template.category}</span>
-    </div>
-  `;
+  header.className = 'flex flex-col items-center mb-8 animate-fade-in-up w-full max-w-lg';
+
+  const thumbSrc = getTemplateThumbnail(template.id);
+  const thumbWrapper = document.createElement('div');
+  thumbWrapper.className = 'w-full h-48 md:h-64 rounded-2xl overflow-hidden mb-6 relative';
+  thumbWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
+  const thumbImg = createThumbnailImg(thumbSrc, template.name, 'w-full h-full object-cover object-top');
+  thumbWrapper.appendChild(thumbImg);
+  const thumbOverlay = document.createElement('div');
+  thumbOverlay.className = 'absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent';
+  thumbWrapper.appendChild(thumbOverlay);
+  header.appendChild(thumbWrapper);
+
+  const iconEl = document.createElement('div');
+  iconEl.className = 'w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 mb-4 text-2xl -mt-10 relative z-10 backdrop-blur-sm';
+  iconEl.textContent = template.icon;
+  header.appendChild(iconEl);
+
+  const titleEl = document.createElement('h1');
+  titleEl.className = 'text-2xl md:text-4xl font-black text-white tracking-tight mb-2 text-center';
+  titleEl.textContent = template.name;
+  header.appendChild(titleEl);
+
+  const descEl = document.createElement('p');
+  descEl.className = 'text-secondary text-sm max-w-md text-center';
+  descEl.textContent = template.description;
+  header.appendChild(descEl);
+
+  const badgeRow = document.createElement('div');
+  badgeRow.className = 'flex gap-2 mt-3';
+  const typeBadge = document.createElement('span');
+  typeBadge.className = `text-[10px] font-bold px-2.5 py-1 rounded-full ${template.outputType === 'video' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-primary/10 text-primary border border-primary/20'}`;
+  typeBadge.textContent = template.outputType === 'video' ? 'Video' : 'Image';
+  const catBadge = document.createElement('span');
+  catBadge.className = 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/5 text-secondary border border-white/10';
+  catBadge.textContent = template.category;
+  badgeRow.appendChild(typeBadge);
+  badgeRow.appendChild(catBadge);
+  header.appendChild(badgeRow);
+
   container.appendChild(header);
 
   const formCard = document.createElement('div');
