@@ -70,7 +70,7 @@ const STUDIO_INSTRUCTIONS = {
   edit: {
     title: 'Edit Studio',
     steps: [
-      { number: 1, heading: 'Upload your image', description: 'Upload the image you want to edit. Supports JPG, PNG, and WebP formats.' },
+      { number: 1, heading: 'Upload your media', description: 'Upload the image or video you want to edit. Supports JPG, PNG, WebP for images and MP4, WebM for videos.' },
       { number: 2, heading: 'Select an edit tool', description: 'Choose from: remove objects, remove background, reframe, expand canvas, inpaint, or relight.' },
       { number: 3, heading: 'Mark the edit area', description: 'For removal tools, paint over the area you want to change. For reframe, select the new crop.' },
       { number: 4, heading: 'Apply changes', description: 'The AI processes your edit and shows the result. You can undo and retry with different settings.' },
@@ -84,7 +84,7 @@ const STUDIO_INSTRUCTIONS = {
   upscale: {
     title: 'Upscale Suite',
     steps: [
-      { number: 1, heading: 'Upload your image', description: 'Upload a low-resolution or blurry image that you want to enhance.' },
+      { number: 1, heading: 'Upload your media', description: 'Upload a low-resolution or blurry image or video that you want to enhance.' },
       { number: 2, heading: 'Choose upscale method', description: 'Select from standard upscale (2x-4x), creative upscale (adds detail), or face enhancement.' },
       { number: 3, heading: 'Process and download', description: 'The AI enhances your image while preserving the original content. Download the high-res result.' },
     ],
@@ -97,7 +97,7 @@ const STUDIO_INSTRUCTIONS = {
   character: {
     title: 'Character Studio',
     steps: [
-      { number: 1, heading: 'Upload reference photos', description: 'Upload 1-3 clear photos of the person or character you want to generate consistently.' },
+      { number: 1, heading: 'Upload reference media', description: 'Upload 1-3 clear photos or video clips of the person or character you want to generate consistently.' },
       { number: 2, heading: 'Train the face model', description: 'The AI learns the facial features. This takes about a minute to process.' },
       { number: 3, heading: 'Generate new images', description: 'Write prompts to place your character in new scenes, outfits, and settings while maintaining face consistency.' },
     ],
@@ -110,7 +110,7 @@ const STUDIO_INSTRUCTIONS = {
   commercial: {
     title: 'Commercial Studio',
     steps: [
-      { number: 1, heading: 'Upload your product', description: 'Take a clean photo of your product against a simple background. Remove distractions.' },
+      { number: 1, heading: 'Upload your product', description: 'Take a clean photo or video of your product against a simple background. Remove distractions.' },
       { number: 2, heading: 'Choose a scene', description: 'Select a commercial setting: studio, lifestyle, outdoor, or describe a custom scene.' },
       { number: 3, heading: 'Set the mood', description: 'Describe the lighting, angle, and atmosphere. Reference professional product photography styles.' },
       { number: 4, heading: 'Generate variations', description: 'Create multiple shots of your product in different settings for A/B testing or catalogs.' },
@@ -130,7 +130,7 @@ const STUDIO_INSTRUCTIONS = {
       { number: 4, heading: 'Generate and download', description: 'Hit Generate to create your image or video. Download the result or click Generate Again to try different inputs.' },
     ],
     quickTips: [
-      'Use high-quality, well-lit photos for image-based templates',
+      'Use high-quality, well-lit photos or videos for media-based templates',
       'Video templates take 1-3 minutes to process',
       'Try the same photo across multiple templates to compare styles',
       'Filter by category to quickly find the right template for your project',
@@ -145,7 +145,7 @@ const STUDIO_INSTRUCTIONS = {
       { number: 4, heading: 'Generate and download', description: 'Hit Generate to create your image or video. Download the result or click Generate Again to try different inputs.' },
     ],
     quickTips: [
-      'Use high-quality, well-lit photos for image-based templates',
+      'Use high-quality, well-lit photos or videos for media-based templates',
       'Video templates take 1-3 minutes to process',
       'Try the same photo across multiple templates to compare styles',
       'Filter by category to quickly find the right template for your project',

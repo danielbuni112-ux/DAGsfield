@@ -72,7 +72,7 @@ export function CommercialStudio() {
 
   const uploadLabel = document.createElement('label');
   uploadLabel.className = 'text-xs font-bold text-secondary uppercase tracking-wider';
-  uploadLabel.textContent = 'Product Image';
+  uploadLabel.textContent = 'Product Media';
   formCard.appendChild(uploadLabel);
 
   const uploadRow = document.createElement('div');
@@ -85,7 +85,7 @@ export function CommercialStudio() {
   uploadRow.appendChild(picker.trigger);
   const uploadHint = document.createElement('span');
   uploadHint.className = 'text-sm text-muted';
-  uploadHint.textContent = 'Upload product photo';
+  uploadHint.textContent = 'Upload product image or video';
   uploadRow.appendChild(uploadHint);
   formCard.appendChild(uploadRow);
   container.appendChild(picker.panel);
@@ -156,7 +156,7 @@ export function CommercialStudio() {
   container.appendChild(resultArea);
 
   genBtn.onclick = async () => {
-    if (!uploadedUrl) { alert('Upload a product image first'); return; }
+    if (!uploadedUrl) { alert('Upload a product image or video first'); return; }
     const apiKey = localStorage.getItem('muapi_key');
     if (!apiKey) { AuthModal(() => genBtn.click()); return; }
 

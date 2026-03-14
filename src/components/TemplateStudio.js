@@ -87,7 +87,7 @@ export function TemplateStudio(templateId) {
 
       const uploadLabel = document.createElement('span');
       uploadLabel.className = 'text-sm text-muted';
-      uploadLabel.textContent = 'Click to upload an image';
+      uploadLabel.textContent = 'Click to upload an image or video';
 
       const clearBtn = document.createElement('button');
       clearBtn.type = 'button';
@@ -101,7 +101,7 @@ export function TemplateStudio(templateId) {
           formState[input.name] = url;
           previewImg.src = url;
           previewImg.classList.remove('hidden');
-          uploadLabel.textContent = 'Image uploaded';
+          uploadLabel.textContent = 'Media uploaded';
           clearBtn.classList.remove('hidden');
         },
         onClear: () => {
@@ -109,7 +109,7 @@ export function TemplateStudio(templateId) {
           formState[input.name] = null;
           previewImg.classList.add('hidden');
           previewImg.src = '';
-          uploadLabel.textContent = 'Click to upload an image';
+          uploadLabel.textContent = 'Click to upload an image or video';
           clearBtn.classList.add('hidden');
         },
         onFilePreview: (file) => {
@@ -128,7 +128,7 @@ export function TemplateStudio(templateId) {
         formState[input.name] = null;
         previewImg.classList.add('hidden');
         previewImg.src = '';
-        uploadLabel.textContent = 'Click to upload an image';
+        uploadLabel.textContent = 'Click to upload an image or video';
         clearBtn.classList.add('hidden');
       };
 

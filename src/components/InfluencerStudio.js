@@ -56,7 +56,7 @@ export function InfluencerStudio() {
   uploadInner.appendChild(picker.trigger);
   const uploadHint = document.createElement('span');
   uploadHint.className = 'text-sm text-muted';
-  uploadHint.textContent = 'Upload reference photo';
+  uploadHint.textContent = 'Upload reference photo or video';
   uploadInner.appendChild(uploadHint);
   uploadRow.appendChild(uploadInner);
   formCard.appendChild(uploadRow);

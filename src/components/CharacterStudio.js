@@ -72,7 +72,7 @@ export function CharacterStudio() {
   uploadRow.appendChild(picker.trigger);
   const hint = document.createElement('span');
   hint.className = 'text-sm text-muted';
-  hint.textContent = 'Upload a clear face photo';
+  hint.textContent = 'Upload a clear face photo or video';
   uploadRow.appendChild(hint);
   formCard.appendChild(uploadRow);
   container.appendChild(picker.panel);

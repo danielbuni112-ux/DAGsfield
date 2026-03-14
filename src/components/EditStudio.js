@@ -85,7 +85,7 @@ export function EditStudio() {
 
   const uploadHint = document.createElement('span');
   uploadHint.className = 'text-sm text-muted';
-  uploadHint.textContent = 'Upload source image';
+  uploadHint.textContent = 'Upload source image or video';
 
   const clearBtn = document.createElement('button');
   clearBtn.type = 'button';
@@ -102,14 +102,14 @@ export function EditStudio() {
       uploadedUrl = url;
       previewImg.src = url;
       previewImg.classList.remove('hidden');
-      uploadHint.textContent = 'Image uploaded';
+      uploadHint.textContent = 'Media uploaded';
       clearBtn.classList.remove('hidden');
     },
     onClear: () => {
       uploadedUrl = null;
       previewImg.classList.add('hidden');
       previewImg.src = '';
-      uploadHint.textContent = 'Upload source image';
+      uploadHint.textContent = 'Upload source image or video';
       clearBtn.classList.add('hidden');
     },
     onFilePreview: (file) => {
@@ -126,7 +126,7 @@ export function EditStudio() {
     uploadedUrl = null;
     previewImg.classList.add('hidden');
     previewImg.src = '';
-    uploadHint.textContent = 'Upload source image';
+    uploadHint.textContent = 'Upload source image or video';
     clearBtn.classList.add('hidden');
   };
 
@@ -179,7 +179,7 @@ export function EditStudio() {
 
   editBtn.onclick = async () => {
     if (!activeTool) return;
-    if (!uploadedUrl) { alert('Upload an image first'); return; }
+    if (!uploadedUrl) { alert('Upload an image or video first'); return; }
     const apiKey = localStorage.getItem('muapi_key');
     if (!apiKey) { AuthModal(() => editBtn.click()); return; }
 

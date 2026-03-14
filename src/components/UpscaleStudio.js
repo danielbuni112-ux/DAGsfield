@@ -68,7 +68,7 @@ export function UpscaleStudio() {
   uploadRow.appendChild(picker.trigger);
   const hint = document.createElement('span');
   hint.className = 'text-sm text-muted';
-  hint.textContent = 'Upload image to upscale';
+  hint.textContent = 'Upload image or video to upscale';
   uploadRow.appendChild(hint);
   formCard.appendChild(uploadRow);
   container.appendChild(picker.panel);
@@ -112,7 +112,7 @@ export function UpscaleStudio() {
   }
 
   genBtn.onclick = async () => {
-    if (!uploadedUrl) { alert('Upload an image first'); return; }
+    if (!uploadedUrl) { alert('Upload an image or video first'); return; }
     const apiKey = localStorage.getItem('muapi_key');
     if (!apiKey) { AuthModal(() => genBtn.click()); return; }
 
