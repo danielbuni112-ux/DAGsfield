@@ -43,6 +43,13 @@ const pageLoaders = {
   'image-to-video': () => import('../components/ImageToVideoPage.js').then(m => m.ImageToVideoPage()),
   'video-to-video': () => import('../components/VideoToVideoPage.js').then(m => m.VideoToVideoPage()),
   'video-watermark': () => import('../components/VideoWatermarkPage.js').then(m => m.VideoWatermarkPage()),
+  'storyboard-page': () => import('../components/StoryboardPage.js').then(m => m.StoryboardPage()),
+  'character-page': () => import('../components/CharacterPage.js').then(m => m.CharacterPage()),
+  'effects-page': () => import('../components/EffectsPage.js').then(m => m.EffectsPage()),
+  'cinema-page': () => import('../components/CinemaPage.js').then(m => m.CinemaPage()),
+  'influencer-page': () => import('../components/InfluencerPage.js').then(m => m.InfluencerPage()),
+  'commercial-page': () => import('../components/CommercialPage.js').then(m => m.CommercialPage()),
+  'upscale-page': () => import('../components/UpscalePage.js').then(m => m.UpscalePage()),
 };
 
 let currentPage = null;

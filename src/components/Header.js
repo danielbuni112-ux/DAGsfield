@@ -25,7 +25,7 @@ export function Header(navigate) {
 
   const menu = document.createElement('nav');
   menu.className = 'hidden lg:flex items-center gap-5 text-[13px] font-bold text-secondary';
-  const items = ['Explore', 'Image', 'Video', 'Storyboard', 'Edit', 'Character', 'Vibe Motion', 'Cinema Studio', 'AI Influencer', 'Apps', 'Templates', 'Assist', 'Community'];
+  const items = ['Explore', 'Image', 'Video', 'Tools', 'Storyboard', 'Edit', 'Character', 'Vibe Motion', 'Cinema Studio', 'AI Influencer', 'Apps', 'Templates', 'Assist', 'Community'];
 
   const links = {};
 
@@ -39,6 +39,26 @@ export function Header(navigate) {
     { label: 'Image to Video', route: 'image-to-video' },
     { label: 'Video to Video', route: 'video-to-video' },
     { label: 'Watermark Remover', route: 'video-watermark' },
+  ];
+
+  const createDropdown = (items, parent) => {
+    const dropdown = document.createElement('div');
+    dropdown.className = 'absolute top-full left-0 mt-2 w-56 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-2';
+    dropdown.innerHTML = items.map(d => `<a class="block px-4 py-2 text-sm text-secondary hover:text-white hover:bg-white/5 cursor-pointer">${d.label}</a>`).join('');
+    items.forEach((d, i) => {
+      dropdown.children[i].onclick = () => navigate(d.route);
+    });
+    parent.appendChild(dropdown);
+  };
+
+  const toolsDropdownItems = [
+    { label: 'Storyboard', route: 'storyboard-page' },
+    { label: 'Character', route: 'character-page' },
+    { label: 'Vibe Motion', route: 'effects-page' },
+    { label: 'Cinema Studio', route: 'cinema-page' },
+    { label: 'AI Influencer', route: 'influencer-page' },
+    { label: 'Commercial', route: 'commercial-page' },
+    { label: 'Upscale', route: 'upscale-page' },
   ];
 
   items.forEach(item => {
@@ -81,7 +101,24 @@ export function Header(navigate) {
       link.appendChild(dropdown);
     }
 
-    if (item !== 'Image' && item !== 'Video') {
+    if (item === 'Tools') {
+      link.classList.add('dropdown-trigger');
+      createDropdown(toolsDropdownItems, link);
+    }
+
+    if (item === 'Storyboard') {
+      link.onclick = () => navigate('storyboard-page');
+    } else if (item === 'Character') {
+      link.onclick = () => navigate('character-page');
+    } else if (item === 'Vibe Motion') {
+      link.onclick = () => navigate('effects-page');
+    } else if (item === 'Cinema Studio') {
+      link.onclick = () => navigate('cinema-page');
+    } else if (item === 'AI Influencer') {
+      link.onclick = () => navigate('influencer-page');
+    } else if (item === 'Image' || item === 'Video' || item === 'Tools') {
+      // Already handled above
+    } else {
       link.onclick = () => {
         const route = getRouteForItem(item);
         navigate(route);
@@ -114,15 +151,16 @@ export function Header(navigate) {
     link.textContent = item;
     link.className = 'text-xl font-bold text-secondary hover:text-white transition-colors cursor-pointer';
     
-    if (item === 'Image' || item === 'Video') {
+    if (item === 'Image' || item === 'Video' || item === 'Tools') {
+      const targetRoute = item === 'Image' ? 'text-to-image' : item === 'Video' ? 'text-to-video' : 'storyboard-page';
       link.onclick = () => {
-        navigate(item.toLowerCase());
+        navigate(targetRoute);
         mobileMenu.classList.add('opacity-0', 'pointer-events-none');
         mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
       };
       mobileMenu.appendChild(link);
       
-      const dropdownItems = item === 'Image' ? imageDropdownItems : videoDropdownItems;
+      const dropdownItems = item === 'Image' ? imageDropdownItems : item === 'Video' ? videoDropdownItems : toolsDropdownItems;
       dropdownItems.forEach(d => {
         const subLink = document.createElement('a');
         subLink.textContent = '→ ' + d.label;
@@ -134,6 +172,41 @@ export function Header(navigate) {
         };
         mobileMenu.appendChild(subLink);
       });
+    } else if (item === 'Storyboard') {
+      link.onclick = () => {
+        navigate('storyboard-page');
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      };
+      mobileMenu.appendChild(link);
+    } else if (item === 'Character') {
+      link.onclick = () => {
+        navigate('character-page');
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      };
+      mobileMenu.appendChild(link);
+    } else if (item === 'Vibe Motion') {
+      link.onclick = () => {
+        navigate('effects-page');
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      };
+      mobileMenu.appendChild(link);
+    } else if (item === 'Cinema Studio') {
+      link.onclick = () => {
+        navigate('cinema-page');
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      };
+      mobileMenu.appendChild(link);
+    } else if (item === 'AI Influencer') {
+      link.onclick = () => {
+        navigate('influencer-page');
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      };
+      mobileMenu.appendChild(link);
     } else {
       link.onclick = () => {
         navigate(getRouteForItem(item));
@@ -177,6 +250,7 @@ export function Header(navigate) {
     const page = e.detail.page;
     const imageRoutes = ['image', 'text-to-image', 'image-to-image'];
     const videoRoutes = ['video', 'text-to-video', 'image-to-video', 'video-to-video', 'video-watermark'];
+    const toolsRoutes = ['storyboard-page', 'character-page', 'effects-page', 'cinema-page', 'influencer-page', 'commercial-page', 'upscale-page'];
     
     Object.entries(links).forEach(([route, el]) => {
       if (route === page || (page.startsWith('template/') && route === 'templates')) {
@@ -188,7 +262,25 @@ export function Header(navigate) {
       } else if (videoRoutes.includes(page) && route === 'Video') {
         el.classList.add('text-white');
         el.classList.remove('text-secondary');
-      } else if (route !== 'Image' && route !== 'Video') {
+      } else if (toolsRoutes.includes(page) && route === 'Tools') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (page === 'storyboard-page' && route === 'Storyboard') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (page === 'character-page' && route === 'Character') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (page === 'effects-page' && route === 'Vibe Motion') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (page === 'cinema-page' && route === 'Cinema Studio') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (page === 'influencer-page' && route === 'AI Influencer') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (route !== 'Image' && route !== 'Video' && route !== 'Tools') {
         el.classList.remove('text-white');
         el.classList.add('text-secondary');
       }
