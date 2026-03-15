@@ -37,6 +37,12 @@ const pageLoaders = {
   assist: () => import('../components/AssistPage.js').then(m => m.AssistPage()),
   community: () => import('../components/CommunityPage.js').then(m => m.CommunityPage()),
   storyboard: () => import('../components/StoryboardStudio.js').then(m => m.StoryboardStudio()),
+  'text-to-image': () => import('../components/TextToImagePage.js').then(m => m.TextToImagePage()),
+  'image-to-image': () => import('../components/ImageToImagePage.js').then(m => m.ImageToImagePage()),
+  'text-to-video': () => import('../components/TextToVideoPage.js').then(m => m.TextToVideoPage()),
+  'image-to-video': () => import('../components/ImageToVideoPage.js').then(m => m.ImageToVideoPage()),
+  'video-to-video': () => import('../components/VideoToVideoPage.js').then(m => m.VideoToVideoPage()),
+  'video-watermark': () => import('../components/VideoWatermarkPage.js').then(m => m.VideoWatermarkPage()),
 };
 
 let currentPage = null;

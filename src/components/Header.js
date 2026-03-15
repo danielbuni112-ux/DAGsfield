@@ -29,6 +29,18 @@ export function Header(navigate) {
 
   const links = {};
 
+  const imageDropdownItems = [
+    { label: 'Text to Image', route: 'text-to-image' },
+    { label: 'Image to Image', route: 'image-to-image' },
+  ];
+
+  const videoDropdownItems = [
+    { label: 'Text to Video', route: 'text-to-video' },
+    { label: 'Image to Video', route: 'image-to-video' },
+    { label: 'Video to Video', route: 'video-to-video' },
+    { label: 'Watermark Remover', route: 'video-watermark' },
+  ];
+
   items.forEach(item => {
     const link = document.createElement('a');
     link.textContent = item;
@@ -37,13 +49,46 @@ export function Header(navigate) {
 
     links[getRouteForItem(item)] = link;
 
-    link.onclick = () => {
-      const route = getRouteForItem(item);
-      navigate(route);
-    };
+    if (item === 'Image') {
+      link.classList.remove('text-white');
+      link.classList.add('text-white', 'dropdown-trigger');
+      link.onclick = () => navigate('text-to-image');
+      
+      const dropdown = document.createElement('div');
+      dropdown.className = 'absolute top-full left-0 mt-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50';
+      dropdown.innerHTML = imageDropdownItems.map(d => `<a class="block px-4 py-2 text-sm text-secondary hover:text-white hover:bg-white/5 cursor-pointer">${d.label}</a>`).join('');
+      
+      imageDropdownItems.forEach((d, i) => {
+        dropdown.children[i].onclick = () => navigate(d.route);
+      });
+      
+      link.appendChild(dropdown);
+    }
+
+    if (item === 'Video') {
+      link.classList.remove('text-white');
+      link.classList.add('text-white', 'dropdown-trigger');
+      link.onclick = () => navigate('text-to-video');
+      
+      const dropdown = document.createElement('div');
+      dropdown.className = 'absolute top-full left-0 mt-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50';
+      dropdown.innerHTML = videoDropdownItems.map(d => `<a class="block px-4 py-2 text-sm text-secondary hover:text-white hover:bg-white/5 cursor-pointer">${d.label}</a>`).join('');
+      
+      videoDropdownItems.forEach((d, i) => {
+        dropdown.children[i].onclick = () => navigate(d.route);
+      });
+      
+      link.appendChild(dropdown);
+    }
+
+    if (item !== 'Image' && item !== 'Video') {
+      link.onclick = () => {
+        const route = getRouteForItem(item);
+        navigate(route);
+      };
+    }
 
     menu.appendChild(link);
-  });
 
   leftPart.appendChild(logoContainer);
   leftPart.appendChild(menu);
@@ -68,12 +113,35 @@ export function Header(navigate) {
     const link = document.createElement('a');
     link.textContent = item;
     link.className = 'text-xl font-bold text-secondary hover:text-white transition-colors cursor-pointer';
-    link.onclick = () => {
-      navigate(getRouteForItem(item));
-      mobileMenu.classList.add('opacity-0', 'pointer-events-none');
-      mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
-    };
-    mobileMenu.appendChild(link);
+    
+    if (item === 'Image' || item === 'Video') {
+      link.onclick = () => {
+        navigate(item.toLowerCase());
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      };
+      mobileMenu.appendChild(link);
+      
+      const dropdownItems = item === 'Image' ? imageDropdownItems : videoDropdownItems;
+      dropdownItems.forEach(d => {
+        const subLink = document.createElement('a');
+        subLink.textContent = '→ ' + d.label;
+        subLink.className = 'text-lg font-bold text-muted hover:text-white transition-colors cursor-pointer';
+        subLink.onclick = () => {
+          navigate(d.route);
+          mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+          mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+        };
+        mobileMenu.appendChild(subLink);
+      });
+    } else {
+      link.onclick = () => {
+        navigate(getRouteForItem(item));
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      };
+      mobileMenu.appendChild(link);
+    }
   });
 
   mobileMenuBtn.onclick = () => {
@@ -107,11 +175,20 @@ export function Header(navigate) {
 
   header.addEventListener('route-changed', (e) => {
     const page = e.detail.page;
+    const imageRoutes = ['image', 'text-to-image', 'image-to-image'];
+    const videoRoutes = ['video', 'text-to-video', 'image-to-video', 'video-to-video', 'video-watermark'];
+    
     Object.entries(links).forEach(([route, el]) => {
       if (route === page || (page.startsWith('template/') && route === 'templates')) {
         el.classList.add('text-white');
         el.classList.remove('text-secondary');
-      } else {
+      } else if (imageRoutes.includes(page) && route === 'Image') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (videoRoutes.includes(page) && route === 'Video') {
+        el.classList.add('text-white');
+        el.classList.remove('text-secondary');
+      } else if (route !== 'Image' && route !== 'Video') {
         el.classList.remove('text-white');
         el.classList.add('text-secondary');
       }
