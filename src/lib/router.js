@@ -5,7 +5,7 @@ const ROUTE_MAP = {
   'Storyboard': 'storyboard',
   'Edit': 'edit',
   'Character': 'character',
-  'Contests': 'explore',
+
   'Vibe Motion': 'effects',
   'Cinema Studio': 'cinema',
   'AI Influencer': 'influencer',
@@ -38,6 +38,7 @@ const pageLoaders = {
   influencer: () => import('../components/InfluencerStudio.js').then(m => m.InfluencerStudio()),
   commercial: () => import('../components/CommercialStudio.js').then(m => m.CommercialStudio()),
   explore: () => import('../components/ExplorePage.js').then(m => m.ExplorePage()),
+
   assist: () => import('../components/AssistPage.js').then(m => m.AssistPage()),
   community: () => import('../components/CommunityPage.js').then(m => m.CommunityPage()),
   storyboard: () => import('../components/StoryboardStudio.js').then(m => m.StoryboardStudio()),
@@ -51,6 +52,7 @@ const pageLoaders = {
 let currentPage = null;
 let contentArea = null;
 let onNavigateCallback = null;
+let isNavigating = false;
 
 export function initRouter(container, callback) {
   contentArea = container;
@@ -59,6 +61,14 @@ export function initRouter(container, callback) {
 
 export async function navigate(page, params = {}) {
   if (!contentArea) return;
+
+  // Prevent concurrent navigation to avoid infinite loops
+  if (isNavigating) {
+    console.warn('[Router] Navigation already in progress, skipping...');
+    return;
+  }
+
+  isNavigating = true;
   currentPage = page;
 
   contentArea.innerHTML = '';
@@ -82,7 +92,10 @@ export async function navigate(page, params = {}) {
       element = mod.PlaceholderPage(page);
     }
 
-    if (currentPage !== page) return;
+    if (currentPage !== page) {
+      isNavigating = false;
+      return;
+    }
 
     contentArea.innerHTML = '';
     contentArea.appendChild(element);
@@ -93,6 +106,8 @@ export async function navigate(page, params = {}) {
     errEl.className = 'w-full h-full flex items-center justify-center text-red-400 text-sm';
     errEl.textContent = `Failed to load ${page}: ${err.message}`;
     contentArea.appendChild(errEl);
+  } finally {
+    isNavigating = false;
   }
 
   if (onNavigateCallback) onNavigateCallback(page);

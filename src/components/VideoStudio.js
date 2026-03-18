@@ -228,6 +228,17 @@ export function VideoStudio() {
         textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
     };
 
+    const videoPrefill = localStorage.getItem('prefill_prompt');
+    if (videoPrefill) {
+        textarea.value = videoPrefill;
+        localStorage.removeItem('prefill_prompt');
+        requestAnimationFrame(() => {
+            textarea.style.height = 'auto';
+            const maxHeight = window.innerWidth < 768 ? 150 : 250;
+            textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+        });
+    }
+
     topRow.appendChild(textarea);
     bar.appendChild(topRow);
 
@@ -1042,16 +1053,15 @@ export function VideoStudio() {
                 throw new Error('No video URL returned by API');
             }
         } catch (e) {
-            console.error(e);
             generateBtn.innerHTML = `Error: ${e.message.slice(0, 40)}`;
             setTimeout(() => {
                 generateBtn.innerHTML = `Generate ✨`;
                 generateBtn.disabled = false;
             }, 3000);
-        } finally {
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = `Generate ✨`;
+            return;
         }
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `Generate ✨`;
     };
 
     return container;

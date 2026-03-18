@@ -45,7 +45,7 @@ export function ExplorePage() {
     card.className = 'bg-white/[0.03] border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:bg-white/[0.06] hover:border-white/10 transition-all group';
     const thumbSrc = getTemplateThumbnail(t.id);
     const heroWrapper = document.createElement('div');
-    heroWrapper.className = 'thumb-hero h-28 relative';
+    heroWrapper.className = 'thumb-hero h-36 relative';
     heroWrapper.innerHTML = '<div class="thumb-skeleton absolute inset-0"></div>';
     const img = createThumbnailImg(thumbSrc, t.name, 'w-full h-full object-cover');
     heroWrapper.appendChild(img);

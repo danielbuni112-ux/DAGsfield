@@ -92,17 +92,22 @@ export function createUploadPicker({ anchorContainer, onSelect, onClear, maxImag
             // Multiple selected — show count
             countBadge.className = 'absolute bottom-0.5 right-0.5 min-w-[16px] h-4 bg-primary rounded-full flex items-center justify-center px-0.5';
             countBadge.innerHTML = `<span class="text-[9px] font-black text-black leading-none">${count}</span>`;
-            trigger.title = `${count} of ${maxImages} images selected — click to manage`;
+            const itemLabel = acceptVideo ? 'items' : 'images';
+            trigger.title = `${count} of ${maxImages} ${itemLabel} selected — click to manage`;
         } else if (canAddMore) {
             // 1 selected, multi-mode active — show "+" to invite adding more
             countBadge.className = 'absolute bottom-0.5 right-0.5 min-w-[16px] h-4 bg-white/80 rounded-full flex items-center justify-center px-0.5 border border-primary/60';
             countBadge.innerHTML = `<span class="text-[9px] font-black text-black leading-none">+</span>`;
-            trigger.title = `1 image selected — click to add more (up to ${maxImages})`;
+            const itemLabel = acceptVideo ? 'item' : 'image';
+            const itemsLabel = acceptVideo ? 'items' : 'images';
+            trigger.title = `1 ${itemLabel} selected — click to add more (up to ${maxImages})`;
         } else {
             // Single mode or at max — show checkmark
             countBadge.className = 'absolute bottom-0.5 right-0.5 min-w-[16px] h-4 bg-primary rounded-full flex items-center justify-center px-0.5';
             countBadge.innerHTML = `<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg>`;
-            trigger.title = count > 1 ? `${count} images selected` : 'Reference image';
+            const itemLabel = acceptVideo ? 'items' : 'images';
+            const singleLabel = acceptVideo ? 'Reference media' : 'Reference image';
+            trigger.title = count > 1 ? `${count} ${itemLabel} selected` : singleLabel;
         }
     };
 
@@ -148,11 +153,13 @@ export function createUploadPicker({ anchorContainer, onSelect, onClear, maxImag
 
         const headerLeft = document.createElement('div');
         headerLeft.className = 'flex flex-col gap-0.5';
-        headerLeft.innerHTML = `<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Reference Images</span>`;
+        const mediaLabel = acceptVideo ? 'Reference Media' : 'Reference Images';
+        headerLeft.innerHTML = `<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">${mediaLabel}</span>`;
         if (isMulti) {
             const hint = document.createElement('span');
             hint.className = 'text-[9px] text-muted';
-            hint.textContent = `Select up to ${maxImages} images`;
+            const itemLabel = acceptVideo ? 'items' : 'images';
+            hint.textContent = `Select up to ${maxImages} ${itemLabel}`;
             headerLeft.appendChild(hint);
         }
         header.appendChild(headerLeft);
@@ -367,7 +374,8 @@ export function createUploadPicker({ anchorContainer, onSelect, onClear, maxImag
         } catch (err) {
             console.error('[UploadPicker] Upload failed:', err);
             updateTrigger();
-            alert(`Image upload failed: ${err.message}`);
+            const uploadType = acceptVideo ? 'Media' : 'Image';
+            alert(`${uploadType} upload failed: ${err.message}`);
         }
 
         fileInput.value = '';
