@@ -2,8 +2,14 @@ import './style.css';
 import { Header } from './components/Header.js';
 import { Sidebar } from './components/Sidebar.js';
 import { initRouter, navigate } from './lib/router.js';
+import { perfMonitor } from './lib/performance.js';
+import { analytics } from './lib/analytics.js';
+import { showToast } from './lib/loading.js';
 
 console.log('[App] Starting initialization...');
+
+// Track initialization performance
+const initStart = performance.now();
 
 // Global error handlers for uncaught exceptions
 window.addEventListener('error', (event) => {
@@ -11,27 +17,19 @@ window.addEventListener('error', (event) => {
   
   // Don't show error UI for known benign errors
   if (event.message?.includes('ResizeObserver') || 
-      event.message?.includes('passive event listener')) {
+      event.message?.includes('passive event listener') ||
+      event.message?.includes('non-passive')) {
     return;
   }
   
-  // Show error toast notification instead of full page crash
-  const errorToast = document.createElement('div');
-  errorToast.id = 'global-error-toast';
-  errorToast.innerHTML = `
-    <div style="position: fixed; bottom: 20px; right: 20px; background: rgba(220, 38, 38, 0.95); color: white; padding: 16px 24px; border-radius: 12px; font-size: 14px; z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 400px;">
-      <div style="font-weight: bold; margin-bottom: 4px;">Something went wrong</div>
-      <div style="opacity: 0.9; font-size: 12px;">${event.message || 'An unexpected error occurred'}</div>
-    </div>
-  `;
-  document.body.appendChild(errorToast);
+  // Track error
+  analytics.trackError('uncaught_exception', event.message || 'Unknown error', {
+    filename: event.filename,
+    lineno: event.lineno
+  });
   
-  // Auto-dismiss after 5 seconds
-  setTimeout(() => {
-    errorToast.style.opacity = '0';
-    errorToast.style.transition = 'opacity 0.3s';
-    setTimeout(() => errorToast.remove(), 300);
-  }, 5000);
+  // Show error toast notification instead of full page crash
+  showToast('Something went wrong. Please refresh the page.', 'error', 10000);
 });
 
 window.addEventListener('unhandledrejection', (event) => {
@@ -39,9 +37,13 @@ window.addEventListener('unhandledrejection', (event) => {
   
   // Only show UI for significant errors (not API cancellations)
   if (event.reason?.name === 'AbortError' || 
-      event.reason?.message?.includes('cancelled')) {
+      event.reason?.message?.includes('cancelled') ||
+      event.reason?.message?.includes('Request cancelled')) {
     return;
   }
+  
+  analytics.trackError('unhandled_rejection', event.reason?.message || String(event.reason));
+  showToast('An operation failed. Please try again.', 'error', 5000);
 });
 
 // Service worker registration for offline support (production)
@@ -52,6 +54,26 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     });
   });
 }
+
+// Visibility change handler - pause/resume operations when tab is hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // Page is hidden - pause non-essential operations
+    console.log('[App] Page hidden, pausing operations');
+  } else {
+    // Page is visible again
+    console.log('[App] Page visible, resuming operations');
+  }
+});
+
+// Online/offline detection
+window.addEventListener('online', () => {
+  showToast('Connection restored', 'success', 3000);
+});
+
+window.addEventListener('offline', () => {
+  showToast('You are offline. Some features may not work.', 'warning', 10000);
+});
 
 try {
   const app = document.querySelector('#app');
@@ -82,15 +104,45 @@ try {
     sidebar.dispatchEvent(new CustomEvent('route-changed', { detail: { page } }));
   });
 
-  console.log('[App] Navigating to image studio...');
-  navigate('image');
+  // Track initialization time
+  const initDuration = performance.now() - initStart;
+  perfMonitor.trackPageLoad('initialization', initDuration);
+  
+  console.log(`[App] Initialized in ${initDuration.toFixed(2)}ms`);
+  
+  // Navigate to initial page
+  // Check URL for deep linking
+  const path = window.location.pathname;
+  let initialPage = 'image';
+  
+  if (path === '/' || path === '') {
+    initialPage = 'image';
+  } else if (path.startsWith('/')) {
+    initialPage = path.slice(1);
+  }
+  
+  // Handle studio query param
+  const studioParam = new URLSearchParams(window.location.search).get('studio');
+  if (studioParam) {
+    initialPage = studioParam;
+  }
+  
+  console.log('[App] Navigating to initial page:', initialPage);
+  navigate(initialPage);
+  
 } catch (error) {
   console.error('[App] Fatal initialization error:', error);
+  
+  // Track fatal error
+  analytics.trackError('fatal_init', error.message);
+  
   document.body.innerHTML = `
     <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #000; color: #fff; flex-direction: column; padding: 20px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 20px;">😕</div>
       <h1 style="color: #ff4444; margin-bottom: 20px;">Application Error</h1>
-      <p style="color: #aaa; max-width: 600px;">${error.message}</p>
-      <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; border: none; border-radius: 8px; color: white; cursor: pointer;">Reload Page</button>
+      <p style="color: #aaa; max-width: 600px; margin-bottom: 20px;">${escapeHtml(error.message)}</p>
+      <p style="color: #666; font-size: 12px; margin-bottom: 20px;">Please try refreshing the page. If the problem persists, clear your browser cache.</p>
+      <button onclick="location.reload()" style="padding: 12px 24px; background: #3b82f6; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">Reload Page</button>
     </div>
   `;
 }
@@ -105,14 +157,25 @@ window.addEventListener('navigate', (e) => {
   }
 });
 
-// Clean up mobile menu when navigating away
-const originalNavigate = navigate;
-navigate = (page, params) => {
-  // Remove any existing mobile menu before navigation
-  const existingMobileMenu = document.querySelector('[data-mobile-menu]');
-  if (existingMobileMenu) {
-    existingMobileMenu.classList.add('opacity-0', 'pointer-events-none');
-    setTimeout(() => existingMobileMenu.remove(), 300);
-  }
-  return originalNavigate(page, params);
+// Wrap navigate to add mobile menu cleanup - use a function wrapper instead of reassignment
+const wrapNavigate = (navigateFn) => {
+  return (page, params) => {
+    // Remove any existing mobile menu before navigation
+    const existingMobileMenu = document.querySelector('[data-mobile-menu]');
+    if (existingMobileMenu) {
+      existingMobileMenu.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => existingMobileMenu.remove(), 300);
+    }
+    return navigateFn(page, params);
+  };
 };
+
+// Note: The wrapper is applied inside initRouter in the router module
+// Expose navigate globally for debugging
+window.navigate = navigate;
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
