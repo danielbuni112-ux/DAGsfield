@@ -5,6 +5,7 @@ import {
     i2iModels, getAspectRatiosForI2IModel, getResolutionsForI2IModel, getQualityFieldForI2IModel,
     getMaxImagesForI2IModel
 } from '../lib/models.js';
+import { ENHANCE_TAGS, QUICK_PROMPTS } from '../lib/promptUtils.js';
 import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { createInlineInstructions } from './InlineInstructions.js';
@@ -38,6 +39,9 @@ export function ImageStudio() {
     let referenceStrength = 50;  // 0-100, for style reference models
     let selectedLora = '';  // LoRA model ID from Civitai
     let loraWeight = 1.0;
+    
+    // Quick tools panel state
+    let showToolsPanel = false;
 
     const getCurrentModels = () => imageMode ? i2iModels : t2iModels;
     const getCurrentAspectRatios = (id) => imageMode ? getAspectRatiosForI2IModel(id) : getAspectRatiosForModel(id);
@@ -181,6 +185,12 @@ export function ImageStudio() {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="opacity-60 text-secondary"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 001.82-.33 1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-1.82.33A1.65 1.65 0 0019.4 9a1.65 1.65 0 00-1.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     `, 'Advanced', 'advanced-btn');
     controlsLeft.appendChild(advancedBtn);
+    
+    // Quick Tools toggle button
+    const toolsBtn = createControlBtn(`
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="opacity-60 text-secondary"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+    `, 'Tools', 'tools-btn');
+    controlsLeft.appendChild(toolsBtn);
     // Show quality button if the default model has quality/resolution options
     const _initResolutions = getResolutionsForModel(defaultModel.id);
     qualityBtn.style.display = _initResolutions.length > 0 ? 'flex' : 'none';
@@ -202,6 +212,73 @@ export function ImageStudio() {
     const inlineInstructions = createInlineInstructions('image');
     inlineInstructions.classList.add('max-w-4xl', 'mt-8');
     container.appendChild(inlineInstructions);
+
+    // ==========================================
+    // 3. QUICK TOOLS PANEL (Prompt Enhancer + Quick Starters)
+    // ==========================================
+    const toolsPanel = document.createElement('div');
+    toolsPanel.className = 'w-full max-w-4xl mt-6 animate-fade-in-up hidden';
+    toolsPanel.id = 'tools-panel';
+    
+    // Build tools panel HTML
+    toolsPanel.innerHTML = `
+        <div class="bg-[#111]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex flex-col gap-4">
+            <div class="flex items-center justify-between pb-3 border-b border-white/5">
+                <h3 class="text-sm font-bold text-white">Quick Tools</h3>
+                <button id="close-tools-btn" class="text-white/40 hover:text-white transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Quick Starters Section -->
+                <div class="flex-1">
+                    <h4 class="text-xs font-bold text-secondary uppercase tracking-wider mb-3">Quick Starters</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        ${QUICK_PROMPTS.map(q => `
+                            <button class="quick-starter-btn px-3 py-2 rounded-lg text-xs font-bold bg-white/5 text-secondary hover:bg-white/10 hover:text-primary transition-all text-left border border-white/5 hover:border-primary/30" data-prompt="${q.prompt}">
+                                ${q.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Prompt Enhancer Section -->
+                <div class="flex-1">
+                    <h4 class="text-xs font-bold text-secondary uppercase tracking-wider mb-3">Prompt Enhancer</h4>
+                    <div class="flex flex-col gap-3">
+                        <input type="text" id="base-prompt-input" 
+                            placeholder="Enter base prompt..."
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-muted focus:outline-none focus:border-primary/50 transition-colors">
+                        
+                        <div>
+                            <label class="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 block">Enhancement Tags</label>
+                            <div id="enhance-tags-area" class="flex flex-wrap gap-1.5">
+                                ${Object.entries(ENHANCE_TAGS).map(([category, tags]) => 
+                                    tags.map(tag => `<button class="enhance-tag-btn px-2 py-1 rounded-full text-[10px] font-bold bg-white/5 text-secondary hover:bg-white/10 transition-all" data-tag="${tag}">${tag}</button>`).join('')
+                                ).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold text-muted uppercase tracking-wider">Enhanced Prompt</label>
+                            <div id="enhanced-prompt-display" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs min-h-[40px]"></div>
+                            <div class="flex gap-2">
+                                <button id="copy-enhanced-btn" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 text-secondary hover:bg-white/10 transition-all">
+                                    Copy
+                                </button>
+                                <button id="use-enhanced-btn" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary text-black hover:shadow-glow transition-all">
+                                    Use in Generator
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(toolsPanel);
 
     // ==========================================
     // 4. ADVANCED OPTIONS PANEL
@@ -333,13 +410,116 @@ export function ImageStudio() {
         document.getElementById('advanced-btn-label').textContent = showAdvanced ? 'Less' : 'Advanced';
     };
     
-    // Add advanced panel to container first before accessing its elements
+    // Add tools panel and advanced panel to container first before accessing their elements
+    container.appendChild(toolsPanel);
     container.appendChild(advancedPanel);
     
     // Now set up event handlers after elements are in DOM
     advancedBtn.onclick = toggleAdvanced;
     const closeAdvBtn = advancedPanel.querySelector('#close-adv-btn');
     if (closeAdvBtn) closeAdvBtn.onclick = toggleAdvanced;
+    
+    // Quick Tools Panel toggle
+    const toggleTools = () => {
+        showToolsPanel = !showToolsPanel;
+        toolsPanel.classList.toggle('hidden', !showToolsPanel);
+        if (showToolsPanel) {
+            // Close advanced panel when opening tools
+            if (!showAdvanced) {
+                showAdvanced = true;
+                advancedPanel.classList.remove('hidden');
+            }
+        }
+        document.getElementById('tools-btn-label').textContent = showToolsPanel ? 'Tools' : 'Tools';
+    };
+    
+    toolsBtn.onclick = toggleTools;
+    const closeToolsBtn = toolsPanel.querySelector('#close-tools-btn');
+    if (closeToolsBtn) closeToolsBtn.onclick = toggleTools;
+    
+    // Quick Starter buttons
+    const quickStarterBtns = toolsPanel.querySelectorAll('.quick-starter-btn');
+    quickStarterBtns.forEach(btn => {
+        btn.onclick = () => {
+            const prompt = btn.dataset.prompt;
+            textarea.value = prompt;
+            textarea.style.height = 'auto';
+            const maxHeight = window.innerWidth < 768 ? 150 : 250;
+            textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+            // Close tools panel after selection
+            showToolsPanel = false;
+            toolsPanel.classList.add('hidden');
+        };
+    });
+    
+    // Prompt Enhancer - selected tags state
+    const enhanceSelectedTags = new Set();
+    const basePromptInput = toolsPanel.querySelector('#base-prompt-input');
+    const enhancedPromptDisplay = toolsPanel.querySelector('#enhanced-prompt-display');
+    
+    // Update enhanced prompt display
+    const updateEnhancedPrompt = () => {
+        const base = basePromptInput?.value?.trim() || '';
+        const tags = Array.from(enhanceSelectedTags).join(', ');
+        const enhanced = [base, tags].filter(p => p).join(', ');
+        if (enhancedPromptDisplay) {
+            enhancedPromptDisplay.textContent = enhanced || 'Your enhanced prompt will appear here...';
+            enhancedPromptDisplay.classList.toggle('text-muted', !enhanced);
+        }
+    };
+    
+    // Base prompt input handler
+    if (basePromptInput) {
+        basePromptInput.oninput = updateEnhancedPrompt;
+    }
+    
+    // Enhance tag buttons
+    const enhanceTagBtns = toolsPanel.querySelectorAll('.enhance-tag-btn');
+    enhanceTagBtns.forEach(btn => {
+        btn.onclick = () => {
+            const tag = btn.dataset.tag;
+            if (enhanceSelectedTags.has(tag)) {
+                enhanceSelectedTags.delete(tag);
+                btn.classList.remove('bg-primary', 'text-black');
+                btn.classList.add('bg-white/5', 'text-secondary');
+            } else {
+                enhanceSelectedTags.add(tag);
+                btn.classList.remove('bg-white/5', 'text-secondary');
+                btn.classList.add('bg-primary', 'text-black');
+            }
+            updateEnhancedPrompt();
+        };
+    });
+    
+    // Copy enhanced button
+    const copyEnhancedBtn = toolsPanel.querySelector('#copy-enhanced-btn');
+    if (copyEnhancedBtn) {
+        copyEnhancedBtn.onclick = () => {
+            const text = enhancedPromptDisplay?.textContent || '';
+            if (text && text !== 'Your enhanced prompt will appear here...') {
+                navigator.clipboard.writeText(text);
+                copyEnhancedBtn.textContent = 'Copied!';
+                setTimeout(() => { copyEnhancedBtn.textContent = 'Copy'; }, 1500);
+            }
+        };
+    }
+    
+    // Use enhanced button
+    const useEnhancedBtn = toolsPanel.querySelector('#use-enhanced-btn');
+    if (useEnhancedBtn) {
+        useEnhancedBtn.onclick = () => {
+            const text = enhancedPromptDisplay?.textContent || '';
+            if (text && text !== 'Your enhanced prompt will appear here...') {
+                textarea.value = text;
+                textarea.style.height = 'auto';
+                const maxHeight = window.innerWidth < 768 ? 150 : 250;
+                textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+                // Close tools panel after use
+                showToolsPanel = false;
+                toolsPanel.classList.add('hidden');
+            }
+        };
+    }
     
     // Negative prompt
     const negPromptInput = advancedPanel.querySelector('#negative-prompt-input');
