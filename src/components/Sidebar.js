@@ -1,6 +1,6 @@
 export function Sidebar(navigate) {
   const element = document.createElement('aside');
-  element.className = 'hidden md:flex flex-col items-center py-4 z-40 border-r border-white/5 bg-panel-bg';
+  element.className = 'hidden md:flex flex-col items-center py-4 z-40 border-r border-white/5 bg-panel-bg overflow-y-auto custom-scrollbar';
   element.style.width = '68px';
 
   const navItems = [
