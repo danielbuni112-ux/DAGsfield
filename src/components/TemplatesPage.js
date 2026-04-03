@@ -9,10 +9,10 @@ export function TemplatesPage() {
   container.className = 'w-full h-full overflow-y-auto bg-app-bg';
 
   const inner = document.createElement('div');
-  inner.className = 'max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-12';
+  inner.className = 'w-full px-4 md:px-8 py-8 md:py-12';
 
   const heroSection = document.createElement('div');
-  heroSection.className = 'mb-10 animate-fade-in-up w-full max-w-4xl';
+  heroSection.className = 'mb-10 animate-fade-in-up w-full';
   const heroBanner = createHeroSection('templates', 'h-32 md:h-44 mb-6');
   if (heroBanner) {
     const heroContent = document.createElement('div');
@@ -73,7 +73,7 @@ export function TemplatesPage() {
   controlsRow.appendChild(filterRow);
   inner.appendChild(controlsRow);
   const inlineInstructions = createInlineInstructions('templates');
-  inlineInstructions.classList.add('max-w-4xl', 'mb-8');
+   inlineInstructions.classList.add('mb-8');
   inner.appendChild(inlineInstructions);
 
   const sectionsContainer = document.createElement('div');

@@ -91,7 +91,7 @@ export function RenderPage() {
   let currentStage = 'finishing';
 
   const inner = document.createElement('div');
-  inner.className = 'mx-auto max-w-6xl';
+  inner.className = 'w-full';
 
   // Hero section
   const hero = document.createElement('div');

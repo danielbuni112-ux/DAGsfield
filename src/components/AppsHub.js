@@ -29,7 +29,7 @@ export function AppsHub() {
   container.className = 'w-full h-full overflow-y-auto bg-app-bg';
 
   const inner = document.createElement('div');
-  inner.className = 'max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-12';
+  inner.className = 'w-full px-4 md:px-8 py-8 md:py-12';
 
   const heroSection = document.createElement('div');
   heroSection.className = 'mb-10 animate-fade-in-up';

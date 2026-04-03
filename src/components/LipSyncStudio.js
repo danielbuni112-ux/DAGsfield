@@ -26,7 +26,7 @@ export function LipSyncStudio() {
     // 1. HERO SECTION
     // ==========================================
     const hero = document.createElement('div');
-    hero.className = 'flex flex-col items-center mb-4 md:mb-6 animate-fade-in-up transition-all duration-700 w-full max-w-4xl';
+    hero.className = 'flex flex-col items-center mb-4 md:mb-6 animate-fade-in-up transition-all duration-700 w-full';
     const heroBanner = createHeroSection('lipsync', 'h-32 md:h-44 mb-6');
     if (heroBanner) {
         const heroContent = document.createElement('div');
@@ -44,7 +44,7 @@ export function LipSyncStudio() {
     // 2. INPUT BAR
     // ==========================================
     const promptWrapper = document.createElement('div');
-    promptWrapper.className = 'w-full max-w-4xl relative z-40 animate-fade-in-up';
+    promptWrapper.className = 'w-full relative z-40 animate-fade-in-up';
     promptWrapper.style.animationDelay = '0.2s';
 
     const bar = document.createElement('div');

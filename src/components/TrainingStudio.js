@@ -17,7 +17,7 @@ export function TrainingStudio() {
 
   // Header with hero banner
   const header = document.createElement('div');
-  header.className = 'mb-8 animate-fade-in-up text-center w-full max-w-xl';
+  header.className = 'mb-8 animate-fade-in-up text-center w-full';
   const trainingBanner = createHeroSection('training', 'h-32 md:h-44 mb-4');
   if (trainingBanner) {
     const bannerText = document.createElement('div');

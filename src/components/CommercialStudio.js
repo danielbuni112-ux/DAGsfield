@@ -27,7 +27,7 @@ export function CommercialStudio() {
   let selectedModel = 'ai-product-shot';
 
   const header = document.createElement('div');
-  header.className = 'mb-8 animate-fade-in-up text-center w-full max-w-xl';
+  header.className = 'mb-8 animate-fade-in-up text-center w-full';
   const commBanner = createHeroSection('commercial', 'h-32 md:h-44 mb-4');
   if (commBanner) {
     const bannerText = document.createElement('div');

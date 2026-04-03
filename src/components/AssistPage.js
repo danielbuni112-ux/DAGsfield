@@ -7,7 +7,7 @@ export function AssistPage() {
   container.className = 'w-full h-full overflow-y-auto bg-app-bg';
 
   const inner = document.createElement('div');
-  inner.className = 'max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12';
+  inner.className = 'w-full px-4 md:px-8 py-8 md:py-12';
 
   const heroBlock = document.createElement('div');
   heroBlock.className = 'mb-10 animate-fade-in-up';

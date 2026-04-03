@@ -28,7 +28,7 @@ export function CinemaStudio() {
     // 1. HERO SECTION (Empty State)
     // ==========================================
     const heroSection = document.createElement('div');
-    heroSection.className = 'flex flex-col items-center text-center px-4 animate-fade-in-up w-full max-w-4xl mb-2 md:mb-4';
+    heroSection.className = 'flex flex-col items-center text-center px-4 animate-fade-in-up w-full mb-2 md:mb-4';
     const cinemaBanner = createHeroSection('cinema', 'h-32 md:h-44 mb-3');
     if (cinemaBanner) {
         const bannerContent = document.createElement('div');
@@ -45,7 +45,7 @@ export function CinemaStudio() {
     container.appendChild(heroSection);
 
     const inlineInstructions = createInlineInstructions('cinema');
-    inlineInstructions.classList.add('max-w-3xl', 'mt-8', 'px-4');
+    inlineInstructions.classList.add('mt-8', 'px-4');
     container.appendChild(inlineInstructions);
 
     // ==========================================
@@ -71,7 +71,7 @@ export function CinemaStudio() {
     }
 
     const cineBuilderWrapper = document.createElement('div');
-    cineBuilderWrapper.className = 'w-full max-w-3xl mt-6 px-4 animate-fade-in-up';
+    cineBuilderWrapper.className = 'w-full mt-6 px-4 animate-fade-in-up';
     cineBuilderWrapper.style.animationDelay = '0.15s';
 
     const cineBuilderToggle = document.createElement('button');
@@ -155,7 +155,7 @@ export function CinemaStudio() {
 
     const overlayContent = document.createElement('div');
     // Reduced padding for mobile (p-4) and added max-height/overflow handling
-    overlayContent.className = 'w-full max-w-4xl bg-[#141414] border border-white/10 rounded-3xl p-4 md:p-8 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]';
+    overlayContent.className = 'w-full bg-[#141414] border border-white/10 rounded-3xl p-4 md:p-8 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]';
     overlayBackdrop.appendChild(overlayContent);
 
     // Header for Overlay
@@ -202,7 +202,7 @@ export function CinemaStudio() {
     // 3. FLOATING PROMPT BAR
     // ==========================================
     const promptBarWrapper = document.createElement('div');
-    promptBarWrapper.className = 'absolute bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-4xl z-30';
+    promptBarWrapper.className = 'absolute bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full z-30';
 
     const promptBar = document.createElement('div');
     promptBar.className = 'bg-[#1a1a1a] border border-white/10 rounded-[2rem] p-4 flex justify-between shadow-3xl items-end relative';
@@ -371,7 +371,7 @@ export function CinemaStudio() {
     // 3B. CAMERA BUILDER PANEL (Collapsible)
     // ==========================================
     const cameraBuilderPanel = document.createElement('div');
-    cameraBuilderPanel.className = 'absolute bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-4xl z-20';
+    cameraBuilderPanel.className = 'absolute bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full z-20';
     cameraBuilderPanel.style.display = 'none'; // Hidden by default
     
     const builderCard = document.createElement('div');

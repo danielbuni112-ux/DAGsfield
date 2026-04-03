@@ -45,7 +45,7 @@ export function VideoStudio() {
     // 1. HERO SECTION
     // ==========================================
     const hero = document.createElement('div');
-    hero.className = 'flex flex-col items-center mb-2 md:mb-4 animate-fade-in-up transition-all duration-700 w-full max-w-4xl';
+    hero.className = 'flex flex-col items-center mb-2 md:mb-4 animate-fade-in-up transition-all duration-700 w-full';
     const heroBanner = createHeroSection('video', 'h-32 md:h-44 mb-3');
     if (heroBanner) {
         const heroContent = document.createElement('div');
@@ -63,7 +63,7 @@ export function VideoStudio() {
     // 2. PROMPT BAR
     // ==========================================
     const promptWrapper = document.createElement('div');
-    promptWrapper.className = 'w-full max-w-4xl relative z-40 animate-fade-in-up';
+    promptWrapper.className = 'w-full relative z-40 animate-fade-in-up';
     promptWrapper.style.animationDelay = '0.2s';
 
     const bar = document.createElement('div');
@@ -325,14 +325,14 @@ export function VideoStudio() {
     container.appendChild(promptWrapper);
 
     const inlineInstructions = createInlineInstructions('video');
-    inlineInstructions.classList.add('max-w-4xl', 'mt-8');
+    inlineInstructions.classList.add('mt-8');
     container.appendChild(inlineInstructions);
 
     // ==========================================
     // ADVANCED OPTIONS PANEL
     // ==========================================
     const advancedPanel = document.createElement('div');
-    advancedPanel.className = 'w-full max-w-4xl mt-6 animate-fade-in-up hidden';
+    advancedPanel.className = 'w-full mt-6 animate-fade-in-up hidden';
     advancedPanel.id = 'v-advanced-panel';
     advancedPanel.innerHTML = `
         <div class="bg-[#111]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex flex-col gap-4">
