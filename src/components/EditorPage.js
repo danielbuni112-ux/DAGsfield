@@ -191,9 +191,39 @@ export function EditorPage() {
         
         <!-- Main Content -->
         <div class="flex-1 flex overflow-hidden">
-            <!-- Video Preview Area -->
+            <!-- Left Sidebar - AI Chat -->
+            <div id="ai-chat-panel" class="w-80 bg-black/30 border-r border-white/5 flex flex-col transition-all duration-300">
+                <div class="p-4 border-b border-white/5">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                        </svg>
+                        AI Chat
+                    </h3>
+                </div>
+                <div class="flex-1 p-4 overflow-y-auto">
+                    <div id="chat-messages" class="space-y-3 mb-4">
+                        <div class="text-xs text-muted">Start a conversation...</div>
+                    </div>
+                    <div class="flex gap-2 mb-3" id="quick-commands">
+                        <button class="px-3 py-1 bg-primary/20 text-primary text-xs rounded-lg hover:bg-primary/30 transition-colors">⚡ Generate</button>
+                        <button class="px-3 py-1 bg-white/10 text-white text-xs rounded-lg hover:bg-white/20 transition-colors">Retake</button>
+                        <button class="px-3 py-1 bg-white/10 text-white text-xs rounded-lg hover:bg-white/20 transition-colors">Extend</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="chat-input" placeholder="Type AI command..." class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none focus:border-primary/50" />
+                        <button id="send-chat-btn" class="px-3 py-2 bg-primary text-black font-bold rounded-lg hover:scale-105 transition-transform">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
             <div class="flex-1 flex flex-col overflow-hidden">
-                <!-- Preview -->
+                <!-- Video Preview Area -->
                 <div class="flex-1 flex items-center justify-center bg-black p-4">
                     ${videoUrl ? `
                         <video 
@@ -293,6 +323,9 @@ export function EditorPage() {
                     </button>
                     <button class="tool-tab flex-1 p-2 text-xs font-bold text-secondary hover:text-white" data-tab="auto">
                         AUTO
+                    </button>
+                    <button class="tool-tab flex-1 p-2 text-xs font-bold text-secondary hover:text-white" data-tab="generate">
+                        ⚡ GENERATE
                     </button>
                     <button class="tool-tab flex-1 p-2 text-xs font-bold text-secondary hover:text-white" data-tab="organize">
                         ORG
@@ -412,9 +445,87 @@ export function EditorPage() {
                                     <div class="flex-1">
                                         <label class="text-xs text-secondary block mb-1">Color</label>
                                         <input type="color" value="#FFFFFF" class="w-full h-9 bg-white/5 border border-white/10 rounded cursor-pointer" id="text-color-input" title="Text color">
-                                    </div>
+                        </div>
+                    </div>
+
+                    <!-- Generate Tab -->
+                    <div id="tab-generate" class="tool-panel p-4 hidden">
+                        <h3 class="font-bold text-white mb-3 text-sm flex items-center gap-2">
+                            <span class="text-cyan-400">⚡</span>
+                            AI GENERATE
+                        </h3>
+                        <p class="text-xs text-secondary mb-4">Generate new content for your timeline</p>
+
+                        <!-- Generation Types -->
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button class="generate-type-btn p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors" data-type="text">
+                                <div class="text-lg mb-1">✍️</div>
+                                <div class="text-xs font-bold text-white">Text</div>
+                            </button>
+                            <button class="generate-type-btn p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors" data-type="image">
+                                <div class="text-lg mb-1">🖼️</div>
+                                <div class="text-xs font-bold text-white">Image</div>
+                            </button>
+                            <button class="generate-type-btn p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors" data-type="retake">
+                                <div class="text-lg mb-1">🔄</div>
+                                <div class="text-xs font-bold text-white">Retake</div>
+                            </button>
+                            <button class="generate-type-btn p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors" data-type="extend">
+                                <div class="text-lg mb-1">➡️</div>
+                                <div class="text-xs font-bold text-white">Extend</div>
+                            </button>
+                            <button class="generate-type-btn p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors" data-type="broll">
+                                <div class="text-lg mb-1">🎞️</div>
+                                <div class="text-xs font-bold text-white">B-Roll</div>
+                            </button>
+                            <button class="generate-type-btn p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors" data-type="music">
+                                <div class="text-lg mb-1">🎵</div>
+                                <div class="text-xs font-bold text-white">Music</div>
+                            </button>
+                        </div>
+
+                        <!-- Prompt Input -->
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs text-secondary block mb-2">Prompt</label>
+                                <textarea id="generate-prompt" placeholder="Describe what you want to generate..." class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none focus:border-primary/50 resize-none" rows="3"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="text-xs text-secondary block mb-2">Negative Prompt</label>
+                                <input type="text" id="generate-negative" placeholder="What to avoid..." class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none focus:border-primary/50" />
+                            </div>
+
+                            <!-- Settings -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-xs text-secondary block mb-1">Duration</label>
+                                    <select id="generate-duration" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50">
+                                        <option value="5">5s</option>
+                                        <option value="8">8s</option>
+                                        <option value="12">12s</option>
+                                        <option value="15">15s</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-secondary block mb-1">Aspect</label>
+                                    <select id="generate-aspect" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50">
+                                        <option value="16:9">16:9</option>
+                                        <option value="9:16">9:16</option>
+                                        <option value="1:1">1:1</option>
+                                        <option value="21:9">21:9</option>
+                                    </select>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button id="generate-btn" class="w-full mt-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-black font-bold rounded-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
+                            <span class="text-lg">⚡</span>
+                            Generate
+                        </button>
+                    </div>
+                </div>
                         </div>
                         
                         <button class="mt-4 w-full py-2 bg-primary text-black font-bold rounded-lg hover:scale-[1.02] transition-transform" id="add-text-btn" title="Add text overlay to timeline">
@@ -1316,13 +1427,120 @@ export function EditorPage() {
     };
 
     agentSendBtn.onclick = () => processAgentCommand(agentInput.value);
-    agentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processAgentCommand(agentInput.value); });
 
-    container.querySelectorAll('.quick-cmd').forEach(btn => {
-        btn.onclick = () => {
-            const cmd = FRAME_AGENT_COMMANDS.find(c => c.id === btn.dataset.command);
-            if (cmd) processAgentCommand(cmd.command);
-        };
+    agentInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') processAgentCommand(agentInput.value);
+    });
+
+    // AI Chat Panel Functionality
+    const chatMessages = container.querySelector('#chat-messages');
+    const chatInput = container.querySelector('#chat-input');
+    const sendChatBtn = container.querySelector('#send-chat-btn');
+    const quickCommands = container.querySelector('#quick-commands');
+
+    function addChatMessage(text, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex gap-2 ${isUser ? 'justify-end' : ''}`;
+        messageDiv.innerHTML = `
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isUser ? 'bg-primary text-black' : 'bg-white/10 text-white'}">
+                ${isUser ? 'You' : 'AI'}
+            </div>
+            <div class="bg-${isUser ? 'primary/20' : 'white/10'} rounded-lg px-3 py-2 max-w-[80%]">
+                <p class="text-xs text-white leading-relaxed">${text}</p>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function processChatCommand(command) {
+        if (!command.trim()) return;
+
+        addChatMessage(command, true);
+        chatInput.value = '';
+
+        // Simulate AI response
+        setTimeout(() => {
+            let response = "I've processed your request.";
+            if (command.toLowerCase().includes('generate')) response = "Generation command queued. Check the Generate panel for options.";
+            if (command.toLowerCase().includes('retake')) response = "Retake command staged for the selected clip.";
+            if (command.toLowerCase().includes('extend')) response = "Extend command queued for the selected clip.";
+            if (command.toLowerCase().includes('b-roll') || command.toLowerCase().includes('broll')) response = "B-Roll suggestion added to the sequence.";
+            if (command.toLowerCase().includes('split')) response = "Clip split at the playhead position.";
+            if (command.toLowerCase().includes('subtitle') || command.toLowerCase().includes('caption')) response = "Subtitles generated and added to timeline.";
+
+            addChatMessage(response, false);
+        }, 500);
+    }
+
+    sendChatBtn?.addEventListener('click', () => processChatCommand(chatInput.value));
+    chatInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            processChatCommand(chatInput.value);
+        }
+    });
+
+    // Quick commands
+    quickCommands?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('quick-cmd') || e.target.closest('.quick-cmd')) {
+            const button = e.target.closest('.quick-cmd');
+            const command = button.textContent.trim();
+            processChatCommand(command);
+        }
+    });
+
+    // Add welcome message to new AI chat panel
+    if (chatMessages) {
+        setTimeout(() => addChatMessage("Hello! I'm your AI timeline assistant. I can help you generate content, edit clips, and optimize your video project.", false), 500);
+    }
+
+    // Generate Panel Functionality
+    const generatePrompt = container.querySelector('#generate-prompt');
+    const generateNegative = container.querySelector('#generate-negative');
+    const generateDuration = container.querySelector('#generate-duration');
+    const generateAspect = container.querySelector('#generate-aspect');
+    const generateBtn = container.querySelector('#generate-btn');
+    const generateTypeBtns = container.querySelectorAll('.generate-type-btn');
+
+    let selectedGenerateType = 'text';
+
+    generateTypeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            generateTypeBtns.forEach(b => b.classList.remove('bg-primary/20', 'border-primary'));
+            generateTypeBtns.forEach(b => b.classList.add('bg-white/5'));
+            btn.classList.remove('bg-white/5');
+            btn.classList.add('bg-primary/20', 'border-primary');
+            selectedGenerateType = btn.dataset.type;
+        });
+    });
+
+    generateBtn?.addEventListener('click', () => {
+        const prompt = generatePrompt?.value.trim();
+        if (!prompt) {
+            showToast('Please enter a prompt', 'warning');
+            return;
+        }
+
+        showToast(`Generating ${selectedGenerateType} content...`, 'info');
+
+        // Simulate generation process
+        setTimeout(() => {
+            // Add generated clip to timeline
+            const newClip = {
+                id: Date.now(),
+                name: `${selectedGenerateType}: ${prompt.slice(0, 20)}...`,
+                start: Math.max(0, timelineClips.length * 5),
+                duration: parseInt(generateDuration?.value || '5'),
+                color: '#22d3ee',
+                type: selectedGenerateType
+            };
+
+            timelineClips.push(newClip);
+            renderTimelineTracks();
+            updateTimelineDuration();
+            showToast(`${selectedGenerateType} clip added to timeline`, 'success');
+        }, 2000);
     });
 
     // ── Initialize ────────────────────────────────────────────────────────────────
@@ -1342,6 +1560,64 @@ export function EditorPage() {
             }
         }
     } catch (e) { /* ignore */ }
+
+    // Add floating rail for AI actions
+    const floatingRail = document.createElement('div');
+    floatingRail.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50';
+    floatingRail.innerHTML = `
+        <div class="bg-black/80 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 flex items-center gap-2 shadow-2xl">
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors text-cyan-400" title="Generate content" id="rail-generate">
+                <span class="text-lg">⚡</span>
+            </button>
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors" title="Split clip" id="rail-split">
+                <span class="text-lg">✂️</span>
+            </button>
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors" title="Add scenes" id="rail-scenes">
+                <span class="text-lg">🎬</span>
+            </button>
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors" title="Add subtitles" id="rail-subtitle">
+                <span class="text-lg">💬</span>
+            </button>
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors" title="Add B-Roll" id="rail-broll">
+                <span class="text-lg">🎞️</span>
+            </button>
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors" title="Adjust speed" id="rail-speed">
+                <span class="text-lg">⏱️</span>
+            </button>
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors" title="Stabilize video" id="rail-stabilize">
+                <span class="text-lg">🪄</span>
+            </button>
+            <button class="rail-btn p-2 hover:bg-white/10 rounded-lg transition-colors" title="Add text overlay" id="rail-text">
+                <span class="text-lg">📝</span>
+            </button>
+        </div>
+    `;
+    document.body.appendChild(floatingRail);
+
+    // Handle rail button clicks
+    const railButtons = floatingRail.querySelectorAll('.rail-btn');
+    railButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.id.replace('rail-', '');
+            showToast(`AI ${action} action triggered`, 'info');
+
+            // Switch to generate tab for generate action
+            if (action === 'generate') {
+                const generateTab = container.querySelector('[data-tab="generate"]');
+                const otherTabs = container.querySelectorAll('.tool-tab');
+                const generatePanel = container.querySelector('#tab-generate');
+                const otherPanels = container.querySelectorAll('.tool-panel');
+
+                otherTabs.forEach(tab => tab.classList.remove('text-primary', 'border-b-2', 'border-primary'));
+                otherTabs.forEach(tab => tab.classList.add('text-secondary'));
+                otherPanels.forEach(panel => panel.classList.add('hidden'));
+
+                generateTab.classList.add('text-primary', 'border-b-2', 'border-primary');
+                generateTab.classList.remove('text-secondary');
+                generatePanel.classList.remove('hidden');
+            }
+        });
+    });
 
     return container;
 }

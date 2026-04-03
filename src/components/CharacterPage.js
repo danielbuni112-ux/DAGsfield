@@ -25,7 +25,7 @@ export function CharacterPage() {
 
   // Hero
   const hero = document.createElement('div');
-  hero.className = 'flex flex-col items-center mb-8 md:mb-12 animate-fade-in-up w-full max-w-5xl';
+  hero.className = 'flex flex-col items-center mb-8 md:mb-12 animate-fade-in-up w-full';
   const heroBanner = createHeroSection('character', 'h-32 md:h-44 mb-4');
   if (heroBanner) {
     const heroContent = document.createElement('div');
@@ -41,7 +41,7 @@ export function CharacterPage() {
 
   // Inner wrapper
   const wrapper = document.createElement('div');
-  wrapper.className = 'w-full max-w-5xl';
+  wrapper.className = 'w-full';
 
   // Features
   const featuresSection = document.createElement('div');
