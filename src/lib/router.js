@@ -62,6 +62,7 @@ const pageLoaders = {
   'video-agent': () => import('../components/VideoAgentPage.js').then(m => m.VideoAgentPage()),
   director: () => import('../components/DirectorPage.js').then(m => m.DirectorPage()),
   timeline: () => import('../components/TimelineEditorPage.js').then(m => m.TimelineEditorPage()),
+  'remix-go': () => import('../components/RemixGoPage.js').then(m => m.RemixGoPage()),
 };
 
 let currentPage = null;
