@@ -42,6 +42,14 @@ export default defineConfig({
         tailwindcss(),
         securityHeaders(),
     ],
+    optimizeDeps: {
+        exclude: ['src/components/EffectsStudio.js']
+    },
+    esbuild: {
+        include: ['src/**/*.{js,jsx,ts,tsx}'],
+        exclude: ['src/components/EffectsStudio.js']
+    },
+
     server: {
         port: 3000,
         proxy: {

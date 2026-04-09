@@ -5,6 +5,10 @@ import { initRouter, navigate } from './lib/router.js';
 import { perfMonitor } from './lib/performance.js';
 import { analytics } from './lib/analytics.js';
 import { showToast } from './lib/loading.js';
+import { generationService } from './lib/editor/generationService.js';
+
+// Make generation service available globally for embedded components
+window.generationService = generationService;
 
 console.log('[App] Starting initialization...');
 
