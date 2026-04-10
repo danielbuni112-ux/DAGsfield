@@ -1,9 +1,18 @@
-export function createVideoAgentWorkspace() {
+export function createVideoAgentWorkspace(runtime = null) {
   // Create the main container
   const container = document.createElement('div');
-  container.className = 'max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-6 text-white font-sans';
-  container.style.background = '#0b0b0c';
+  container.className = 'w-full h-full bg-app-bg text-white font-sans overflow-hidden';
+  container.style.background = '#050505';
 
+  // ==========================================
+  // 0. STATE MANAGEMENT
+  // ==========================================
+  let uploadedVideoUrl = null;
+  let isDragOver = false;
+
+  // ==========================================
+  // 1. STYLES
+  // ==========================================
   // Add styles
   const style = document.createElement('style');
   style.textContent = `
@@ -194,23 +203,48 @@ export function createVideoAgentWorkspace() {
         min-height: 480px;
       }
     }
+
+    .drag-over {
+      border-color: rgba(168,85,247,0.6) !important;
+      background: rgba(168,85,247,0.05) !important;
+    }
+
+    .upload-zone {
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 1rem;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .upload-zone:hover {
+      border-color: rgba(168,85,247,0.4);
+      background: rgba(168,85,247,0.02);
+    }
+
+    .tab-btn.active {
+      background: rgba(168,85,247,0.1);
+      border-color: rgba(168,85,247,0.3);
+      color: #d8b4fe;
+    }
   `;
   document.head.appendChild(style);
 
   container.innerHTML = `
     <!-- TOP BAR -->
-    <div class="w-full flex items-center justify-between px-6 py-4 card">
+    <div class="w-full flex items-center justify-between px-6 py-4 bg-panel-bg border-b border-white/5">
       <div class="flex items-center gap-4">
         <div>
           <div class="font-black text-lg leading-none">VideoAgent</div>
-          <div class="text-xs text-white/50 mt-1">Project: Summer Campaign Edit</div>
+          <div class="text-xs text-muted mt-1">Project: Summer Campaign Edit</div>
         </div>
-        <span class="status-pill">AI READY</span>
+        <span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/20">AI READY</span>
       </div>
       <div class="flex items-center gap-3">
-        <button class="ghost-btn">Version History</button>
-        <button class="ghost-btn">Save</button>
-        <button class="primary-btn">Export</button>
+        <button class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-muted text-sm rounded-lg transition-colors">Version History</button>
+        <button class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-muted text-sm rounded-lg transition-colors">Save</button>
+        <button class="px-4 py-2 bg-primary text-black font-bold rounded-lg hover:scale-105 transition-transform">Export</button>
       </div>
     </div>
 
@@ -296,11 +330,11 @@ export function createVideoAgentWorkspace() {
       <div class="space-y-4">
         <div class="card p-4 flex flex-col gap-3">
           <div class="mini-label mb-1">AGENT GOALS</div>
-          <button class="goal-btn">🎬 Create Highlights</button>
-          <button class="goal-btn">📱 Make Shorts</button>
-          <button class="goal-btn">📝 Add Captions</button>
-          <button class="goal-btn">🌍 Dub Video</button>
-          <button class="goal-btn">✨ Improve Quality</button>
+          <button class="goal-btn" data-goal="Create highlights from this video">🎬 Create Highlights</button>
+          <button class="goal-btn" data-goal="Make 3 short vertical clips">📱 Make Shorts</button>
+          <button class="goal-btn" data-goal="Add captions to this video">📝 Add Captions</button>
+          <button class="goal-btn" data-goal="Dub this video into Spanish">🌍 Dub Video</button>
+          <button class="goal-btn" data-goal="Improve video quality and pacing">✨ Improve Quality</button>
         </div>
 
         <div class="card p-4">
@@ -333,13 +367,15 @@ export function createVideoAgentWorkspace() {
               <button class="primary-btn">AI Version</button>
             </div>
           </div>
-          <div class="preview-stage">
-            <video id="video" controls aria-label="Video preview player"></video>
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div class="text-center px-6">
-                <div class="text-6xl mb-4 opacity-70">▶</div>
-                <div class="text-base text-white/55 font-medium">Preview the current working cut here</div>
-                <div class="text-sm text-white/35 mt-2">Large native HTML5 video stage — not an iframe</div>
+          <div class="preview-stage" id="preview-stage">
+            <video id="video" controls aria-label="Video preview player" style="display: none;"></video>
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none" id="upload-zone">
+              <div class="upload-zone w-full h-full flex flex-col items-center justify-center" id="drop-zone">
+                <div class="text-6xl mb-4 opacity-70">🎬</div>
+                <div class="text-xl font-bold text-white/80 mb-2">Drop your video here</div>
+                <div class="text-base text-white/55 font-medium mb-4">Or click to browse files</div>
+                <div class="text-sm text-white/35">Supports MP4, MOV, AVI, WebM up to 2GB</div>
+                <input type="file" id="video-upload" accept="video/*" style="display: none;">
               </div>
             </div>
           </div>
@@ -418,14 +454,35 @@ export function createVideoAgentWorkspace() {
           </div>
 
           <div class="px-4 pt-4 grid grid-cols-3 gap-2">
-            <button class="ghost-btn text-xs">Chat</button>
-            <button class="ghost-btn text-xs">Outputs</button>
-            <button class="ghost-btn text-xs">Inspector</button>
+            <button class="tab-btn ghost-btn text-xs active" data-tab="chat">Chat</button>
+            <button class="tab-btn ghost-btn text-xs" data-tab="outputs">Outputs</button>
+            <button class="tab-btn ghost-btn text-xs" data-tab="inspector">Inspector</button>
           </div>
 
-          <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div id="chat" class="tab-content flex-1 overflow-y-auto p-4 space-y-3">
             <div class="chat-bubble-agent text-sm text-white/80">I can plan edits, create shorts, add captions, improve pacing, and help you build new video versions.</div>
             <div class="chat-bubble-agent text-sm text-white/80">Try: "Make 3 short clips from the strongest moments."</div>
+          </div>
+
+          <div id="outputs" class="tab-content flex-1 overflow-y-auto p-4 space-y-3" style="display: none;">
+            <div class="text-sm text-white/70 mb-4">Generated outputs will appear here</div>
+            <div class="subtle-card p-3">
+              <div class="text-sm font-bold text-white mb-1">No outputs yet</div>
+              <div class="text-xs text-white/50">Run an AI agent to generate video outputs</div>
+            </div>
+          </div>
+
+          <div id="inspector" class="tab-content flex-1 overflow-y-auto p-4 space-y-3" style="display: none;">
+            <div class="text-sm text-white/70 mb-4">Video analysis and metadata</div>
+            <div class="subtle-card p-3">
+              <div class="text-sm font-bold text-white mb-1">Video Metadata</div>
+              <div class="text-xs text-white/50 space-y-1">
+                <div>Duration: --</div>
+                <div>Resolution: --</div>
+                <div>Codec: --</div>
+                <div>Size: --</div>
+              </div>
+            </div>
           </div>
 
           <div class="p-4 border-t border-white/10 space-y-3">
@@ -501,12 +558,44 @@ export function createVideoAgentWorkspace() {
     input.value = '';
 
     log(val, 'user');
-    const intent = parseIntent(val);
-    const tasks = planTasks(intent);
-    const planText = tasks.join(' → ');
-    log(`Plan: ${planText}`, 'agent');
-    planPreview.textContent = planText;
-    createJob(tasks);
+
+    if (runtime) {
+      // Use the real director runtime
+      try {
+        const result = await runtime.processChatCommand(val);
+        const activatedAgents = result.activatedAgents || [];
+        const agentNames = activatedAgents.map(a => typeof a === 'string' ? a : a.name || a).join(', ');
+
+        if (activatedAgents.length > 0) {
+          log(`Activating agents: ${agentNames}`, 'agent');
+          planPreview.textContent = `Agents: ${agentNames}`;
+        }
+
+        // Execute agent commands
+        for (const agent of activatedAgents) {
+          const agentId = typeof agent === 'string' ? agent : agent.id;
+          try {
+            await runtime.executeAgentCommand(agentId, { videoUrl: runtime.getVideoUrl() });
+          } catch (error) {
+            log(`Agent ${agentId} failed: ${error.message}`, 'agent');
+          }
+        }
+
+        if (activatedAgents.length === 0) {
+          log('No specific agents needed for this task.', 'agent');
+        }
+      } catch (error) {
+        log(`Error processing command: ${error.message}`, 'agent');
+      }
+    } else {
+      // Fallback to mock functionality
+      const intent = parseIntent(val);
+      const tasks = planTasks(intent);
+      const planText = tasks.join(' → ');
+      log(`Plan: ${planText}`, 'agent');
+      planPreview.textContent = planText;
+      createJob(tasks);
+    }
   };
 
   input.addEventListener('keydown', async (e) => {
@@ -529,6 +618,135 @@ export function createVideoAgentWorkspace() {
       await handleInput(btn.dataset.prompt);
     });
   });
+
+  // ==========================================
+  // 4. VIDEO UPLOAD FUNCTIONALITY
+  // ==========================================
+  const previewStage = container.querySelector('#preview-stage');
+  const videoElement = container.querySelector('#video');
+  const uploadZone = container.querySelector('#upload-zone');
+  const dropZone = container.querySelector('#drop-zone');
+  const fileInput = container.querySelector('#video-upload');
+
+  function showVideoPlayer(url) {
+    uploadedVideoUrl = url;
+    videoElement.src = url;
+    videoElement.style.display = 'block';
+    uploadZone.style.display = 'none';
+
+    // Update runtime if available
+    if (runtime) {
+      runtime.setVideoUrl(url);
+    }
+  }
+
+  function showUploadZone() {
+    videoElement.style.display = 'none';
+    uploadZone.style.display = 'flex';
+    uploadedVideoUrl = null;
+  }
+
+  // Drag and drop handlers
+  previewStage.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDragOver = true;
+    dropZone.classList.add('drag-over');
+  });
+
+  previewStage.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!previewStage.contains(e.relatedTarget)) {
+      isDragOver = false;
+      dropZone.classList.remove('drag-over');
+    }
+  });
+
+  previewStage.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDragOver = false;
+    dropZone.classList.remove('drag-over');
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleVideoFile(files[0]);
+    }
+  });
+
+  // Click to upload
+  dropZone.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleVideoFile(file);
+    }
+  });
+
+  function handleVideoFile(file) {
+    if (!file.type.startsWith('video/')) {
+      alert('Please select a video file.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024 * 1024) { // 2GB limit
+      alert('File size must be less than 2GB.');
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    showVideoPlayer(url);
+
+    // Update metadata display
+    const sourceDiv = container.querySelector('.subtle-card:nth-child(1) .text-sm');
+    const sizeDiv = container.querySelector('.subtle-card:nth-child(1) .text-xs');
+    if (sourceDiv && sizeDiv) {
+      sourceDiv.textContent = file.name;
+      sizeDiv.textContent = `${(file.size / (1024 * 1024)).toFixed(1)} MB • ${file.type}`;
+    }
+  }
+
+  // ==========================================
+  // 5. TAB SWITCHING FUNCTIONALITY
+  // ==========================================
+  const tabButtons = container.querySelectorAll('.tab-btn');
+  const tabContents = container.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tabName = button.dataset.tab;
+
+      // Update button states
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      // Show selected tab content
+      tabContents.forEach(content => {
+        content.style.display = content.id === tabName ? 'block' : 'none';
+      });
+    });
+  });
+
+  // Add video controls
+  const originalBtn = container.querySelector('button[data-original]');
+  const aiBtn = container.querySelector('button[data-ai]');
+
+  if (originalBtn && aiBtn) {
+    originalBtn.addEventListener('click', () => {
+      if (uploadedVideoUrl) {
+        showVideoPlayer(uploadedVideoUrl);
+      }
+    });
+
+    aiBtn.addEventListener('click', () => {
+      // TODO: Show AI processed version when available
+      showToast('AI processing not yet implemented', 'info');
+    });
+  }
 
   return container;
 }
