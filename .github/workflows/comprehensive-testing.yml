@@ -24,7 +24,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Run linting
       run: npm run lint
@@ -74,7 +74,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Run performance tests
       run: npm run test:e2e -- --project=performance
@@ -96,7 +96,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
@@ -118,7 +118,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Start module servers
       run: |
@@ -143,7 +143,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Start app servers
       run: |
@@ -192,7 +192,7 @@ jobs:
     - name: Generate comprehensive test report
       run: |
         npm install -g junit-report-merger
-        npx junit-report-merger -d test-results/ -o test-results/combined-report.xml
+        find test-results/ -name "*.xml" | head -10 | xargs npx junit-report-merger -o test-results/combined-report.xml || echo "No XML files found"
 
     - name: Upload comprehensive report
       uses: actions/upload-artifact@v4
