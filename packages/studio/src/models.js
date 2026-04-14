@@ -1,6 +1,409 @@
 // Auto-generated from models_dump.json
 export const t2iModels = [
   {
+    "provider": "fal",
+    "id": "fal-ai/nano-banana",
+    "name": "Nano Banana",
+    "endpoint": "fal-ai/nano-banana",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9", "3:2", "2:3", "5:4", "4:5", "21:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/nano-banana-pro",
+    "name": "Nano Banana Pro",
+    "endpoint": "fal-ai/nano-banana-pro",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9", "3:2", "2:3", "5:4", "4:5", "21:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/nano-banana-2",
+    "name": "Nano Banana 2",
+    "endpoint": "fal-ai/nano-banana-2",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9", "3:2", "2:3", "5:4", "4:5", "21:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/z-image/turbo",
+    "name": "Z-Image Turbo",
+    "endpoint": "fal-ai/z-image/turbo",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9", "9:21"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/z-image/base",
+    "name": "Z-Image Base",
+    "endpoint": "fal-ai/z-image/base",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9", "9:21"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/imagen4/preview",
+    "name": "Imagen 4",
+    "endpoint": "fal-ai/imagen4/preview",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/imagen4/preview/fast",
+    "name": "Imagen 4 Fast",
+    "endpoint": "fal-ai/imagen4/preview/fast",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/imagen4/preview/ultra",
+    "name": "Imagen 4 Ultra",
+    "endpoint": "fal-ai/imagen4/preview/ultra",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/v1.1-ultra",
+    "name": "FLUX1.1 [pro] Ultra",
+    "endpoint": "fal-ai/flux-pro/v1.1-ultra",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["21:9", "16:9", "4:3", "3:2", "1:1", "2:3", "3:4", "9:16", "9:21"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/kontext/text-to-image",
+    "name": "FLUX.1 Kontext [pro]",
+    "endpoint": "fal-ai/flux-pro/kontext/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "3:4", "4:3"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/kontext/max/text-to-image",
+    "name": "FLUX.1 Kontext [max]",
+    "endpoint": "fal-ai/flux-pro/kontext/max/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "3:4", "4:3"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-2",
+    "name": "Flux 2 [dev]",
+    "endpoint": "fal-ai/flux-2",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-2/turbo",
+    "name": "Flux 2 Turbo",
+    "endpoint": "fal-ai/flux-2/turbo",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-2/flash",
+    "name": "Flux 2 Flash",
+    "endpoint": "fal-ai/flux-2/flash",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-2-max",
+    "name": "Flux 2 Max",
+    "endpoint": "fal-ai/flux-2-max",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-2-pro",
+    "name": "Flux 2 Pro",
+    "endpoint": "fal-ai/flux-2-pro",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/ideogram/v3",
+    "name": "Ideogram V3",
+    "endpoint": "fal-ai/ideogram/v3",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/ideogram/v2",
+    "name": "Ideogram V2",
+    "endpoint": "fal-ai/ideogram/v2",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/recraft/v4/text-to-image",
+    "name": "Recraft V4",
+    "endpoint": "fal-ai/recraft/v4/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/recraft/v4/pro/text-to-image",
+    "name": "Recraft V4 Pro",
+    "endpoint": "fal-ai/recraft/v4/pro/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/gpt-image-1.5",
+    "name": "GPT-Image 1.5",
+    "endpoint": "fal-ai/gpt-image-1.5",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["1024x1024", "1792x1024", "1024x1792"], "default": "1024x1024" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/qwen-image-2/text-to-image",
+    "name": "Qwen Image 2",
+    "endpoint": "fal-ai/qwen-image-2/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/bytedance/seedream/v4/text-to-image",
+    "name": "Seedream v4",
+    "endpoint": "fal-ai/bytedance/seedream/v4/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/bytedance/seedream/v4.5/text-to-image",
+    "name": "Seedream v4.5",
+    "endpoint": "fal-ai/bytedance/seedream/v4.5/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/kling-image/v3/text-to-image",
+    "name": "Kling Image v3",
+    "endpoint": "fal-ai/kling-image/v3/text-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "2:3", "3:2"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/minimax/image-01",
+    "name": "MiniMax Image",
+    "endpoint": "fal-ai/minimax/image-01",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "2:1", "1:2"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/luma-photon",
+    "name": "Luma Photon",
+    "endpoint": "fal-ai/luma-photon",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/stable-diffusion-v35-large",
+    "name": "Stable Diffusion 3.5 Large",
+    "endpoint": "fal-ai/stable-diffusion-v35-large",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/hidream-i1-fast",
+    "name": "HiDream I1 Fast (fal)",
+    "endpoint": "fal-ai/hidream-i1-fast",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/hidream-i1-full",
+    "name": "HiDream I1 Full (fal)",
+    "endpoint": "fal-ai/hidream-i1-full",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/v1.1",
+    "name": "FLUX.1 [pro] v1.1",
+    "endpoint": "fal-ai/flux-pro/v1.1",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "image_size": {
+        "enum": [
+          "square_hd",
+          "square",
+          "portrait_4_5",
+          "portrait_16_9",
+          "landscape_4_3",
+          "landscape_16_9"
+        ],
+        "default": "square_hd"
+      }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux/dev",
+    "name": "FLUX.1 [dev]",
+    "endpoint": "fal-ai/flux/dev",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "image_size": {
+        "enum": [
+          "square_hd",
+          "square",
+          "portrait_4_5",
+          "portrait_16_9",
+          "landscape_4_3",
+          "landscape_16_9"
+        ],
+        "default": "square_hd"
+      }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux/schnell",
+    "name": "FLUX.1 [schnell]",
+    "endpoint": "fal-ai/flux/schnell",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "image_size": {
+        "enum": [
+          "square_hd",
+          "square",
+          "portrait_4_5",
+          "portrait_16_9",
+          "landscape_4_3",
+          "landscape_16_9"
+        ],
+        "default": "square_hd"
+      }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-lora",
+    "name": "FLUX.1 [dev] with LoRAs",
+    "endpoint": "fal-ai/flux-lora",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "loras": {
+        "type": "array",
+        "title": "Loras",
+        "name": "loras",
+        "default": []
+      },
+      "image_size": {
+        "enum": [
+          "square_hd",
+          "square",
+          "portrait_4_5",
+          "portrait_16_9",
+          "landscape_4_3",
+          "landscape_16_9"
+        ],
+        "default": "landscape_4_3"
+      }
+    }
+  },
+  {
+    "provider": "muapi",
     "id": "nano-banana",
     "name": "Nano Banana",
     "endpoint": "nano-banana",
@@ -36,6 +439,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-dev",
     "name": "Flux Dev",
     "endpoint": "flux-dev-image",
@@ -82,6 +486,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-dev-lora",
     "name": "Flux Dev Lora",
     "inputs": {
@@ -163,6 +568,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-kontext-dev-t2i",
     "name": "Flux Kontext Dev T2I",
     "inputs": {
@@ -207,6 +613,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "hidream-i1-fast",
     "name": "Hidream I1 Fast",
     "inputs": {
@@ -252,6 +659,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "hidream-i1-dev",
     "name": "Hidream I1 Dev",
     "inputs": {
@@ -297,6 +705,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "hidream-i1-full",
     "name": "Hidream I1 Full",
     "inputs": {
@@ -342,6 +751,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "ai-anime-generator",
     "name": "Ai Anime Generator",
     "inputs": {
@@ -379,6 +789,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "wan2.1-text-to-image",
     "name": "Wan2.1 Text To Image",
     "inputs": {
@@ -414,6 +825,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-kontext-pro-t2i",
     "name": "Flux Kontext Pro T2I",
     "inputs": {
@@ -445,6 +857,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-kontext-max-t2i",
     "name": "Flux Kontext Max T2I",
     "inputs": {
@@ -476,6 +889,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "gpt4o-text-to-image",
     "name": "Gpt4o Text To Image",
     "inputs": {
@@ -515,6 +929,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "midjourney-v7-text-to-image",
     "name": "Midjourney v7 Text To Image",
     "inputs": {
@@ -592,6 +1007,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-schnell",
     "name": "Flux Schnell",
     "endpoint": "flux-schnell-image",
@@ -638,6 +1054,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "bytedance-seedream-v3",
     "name": "Bytedance Seedream v3",
     "inputs": {
@@ -667,6 +1084,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "qwen-image",
     "name": "Qwen Image",
     "inputs": {
@@ -710,6 +1128,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-pulid",
     "name": "Flux Pulid",
     "inputs": {
@@ -749,6 +1168,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "ideogram-v3-t2i",
     "name": "Ideogram v3 T2I",
     "inputs": {
@@ -814,6 +1234,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "google-imagen4",
     "name": "Google Imagen4",
     "inputs": {
@@ -854,6 +1275,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "google-imagen4-fast",
     "name": "Google Imagen4 Fast",
     "inputs": {
@@ -894,6 +1316,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "google-imagen4-ultra",
     "name": "Google Imagen4 Ultra",
     "inputs": {
@@ -923,6 +1346,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "sdxl-image",
     "name": "Sdxl Image",
     "inputs": {
@@ -958,6 +1382,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "bytedance-seedream-v4",
     "name": "Bytedance Seedream v4",
     "inputs": {
@@ -1012,6 +1437,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "hunyuan-image-2.1",
     "name": "Hunyuan Image 2.1",
     "inputs": {
@@ -1047,6 +1473,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "chroma-image",
     "name": "Chroma Image",
     "inputs": {
@@ -1082,6 +1509,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-redux",
     "name": "Flux Redux",
     "inputs": {
@@ -1135,6 +1563,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-krea-dev",
     "name": "Flux Krea Dev",
     "inputs": {
@@ -1178,6 +1607,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "perfect-pony-xl",
     "name": "Perfect Pony Xl",
     "inputs": {
@@ -1213,6 +1643,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "neta-lumina",
     "name": "Neta Lumina",
     "inputs": {
@@ -1248,6 +1679,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "wan2.5-text-to-image",
     "name": "Wan2.5 Text To Image",
     "inputs": {
@@ -1283,6 +1715,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "hunyuan-image-3.0",
     "name": "Hunyuan Image 3.0",
     "inputs": {
@@ -1318,6 +1751,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "leonardoai-phoenix-1.0",
     "name": "Leonardoai Phoenix 1.0",
     "inputs": {
@@ -1351,6 +1785,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "leonardoai-lucid-origin",
     "name": "Leonardoai Lucid Origin",
     "inputs": {
@@ -1384,6 +1819,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "reve-text-to-image",
     "name": "Reve Text To Image",
     "inputs": {
@@ -1415,6 +1851,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "grok-imagine-text-to-image",
     "name": "Grok Imagine Text To Image",
     "inputs": {
@@ -1444,6 +1881,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "nano-banana-pro",
     "name": "Nano Banana Pro",
     "endpoint": "nano-banana-pro",
@@ -1491,6 +1929,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "kling-o1-text-to-image",
     "name": "Kling O1 Text To Image",
     "inputs": {
@@ -1544,6 +1983,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "z-image-turbo",
     "name": "Z Image Turbo",
     "inputs": {
@@ -1579,6 +2019,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-2-dev",
     "name": "Flux 2 Dev",
     "inputs": {
@@ -1614,6 +2055,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-2-flex",
     "name": "Flux 2 Flex",
     "inputs": {
@@ -1656,6 +2098,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-2-pro",
     "name": "Flux 2 Pro",
     "inputs": {
@@ -1698,6 +2141,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "vidu-q2-text-to-image",
     "name": "Vidu Q2 Text To Image",
     "inputs": {
@@ -1742,6 +2186,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "bytedance-seedream-v4.5",
     "name": "Bytedance Seedream V4.5",
     "inputs": {
@@ -1785,6 +2230,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "gpt-image-1.5",
     "name": "Gpt Image 1.5",
     "inputs": {
@@ -1824,6 +2270,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "wan2.6-text-to-image",
     "name": "Wan2.6 Text To Image",
     "inputs": {
@@ -1859,6 +2306,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "qwen-text-to-image-2512",
     "name": "Qwen Text To Image 2512",
     "inputs": {
@@ -1894,6 +2342,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-2-klein-4b",
     "name": "Flux 2 Klein 4b",
     "inputs": {
@@ -1925,6 +2374,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "flux-2-klein-9b",
     "name": "Flux 2 Klein 9b",
     "inputs": {
@@ -1956,6 +2406,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "z-image-base",
     "name": "Z Image Base",
     "inputs": {
@@ -2007,6 +2458,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "nano-banana-2",
     "name": "Nano Banana 2",
     "endpoint": "nano-banana-2",
@@ -2023,8 +2475,21 @@ export const t2iModels = [
       },
       "aspect_ratio": {
         "enum": [
-          "1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5",
-          "5:4", "8:1", "9:16", "16:9", "21:9", "auto"
+          "1:1",
+          "1:4",
+          "1:8",
+          "2:3",
+          "3:2",
+          "3:4",
+          "4:1",
+          "4:3",
+          "4:5",
+          "5:4",
+          "8:1",
+          "9:16",
+          "16:9",
+          "21:9",
+          "auto"
         ],
         "title": "Aspect Ratio",
         "name": "aspect_ratio",
@@ -2033,7 +2498,11 @@ export const t2iModels = [
         "default": "auto"
       },
       "resolution": {
-        "enum": ["1k", "2k", "4k"],
+        "enum": [
+          "1k",
+          "2k",
+          "4k"
+        ],
         "title": "Resolution",
         "name": "resolution",
         "type": "string",
@@ -2048,7 +2517,10 @@ export const t2iModels = [
         "default": false
       },
       "output_format": {
-        "enum": ["jpg", "png"],
+        "enum": [
+          "jpg",
+          "png"
+        ],
         "title": "Output Format",
         "name": "output_format",
         "type": "string",
@@ -2058,6 +2530,7 @@ export const t2iModels = [
     }
   },
   {
+    "provider": "muapi",
     "id": "seedream-5.0",
     "name": "Seedream 5.0",
     "endpoint": "seedream-5.0",
@@ -2073,7 +2546,16 @@ export const t2iModels = [
         ]
       },
       "aspect_ratio": {
-        "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "2:3", "3:2", "21:9"],
+        "enum": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4",
+          "2:3",
+          "3:2",
+          "21:9"
+        ],
         "title": "Aspect Ratio",
         "name": "aspect_ratio",
         "type": "string",
@@ -2081,7 +2563,10 @@ export const t2iModels = [
         "default": "1:1"
       },
       "quality": {
-        "enum": ["basic", "high"],
+        "enum": [
+          "basic",
+          "high"
+        ],
         "title": "Quality",
         "name": "quality",
         "type": "string",
@@ -2111,6 +2596,40 @@ export const getAspectRatiosForModel = (modelId) => {
 // ==========================================
 export const t2vModels = [
   {
+    "provider": "fal",
+    "id": "fal-ai/kling-video/v3/pro/text-to-video",
+    "name": "Kling v3.0 Pro",
+    "endpoint": "fal-ai/kling-video/v3/pro/text-to-video",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "duration": {
+        "enum": [
+          "5",
+          "10"
+        ],
+        "default": "5"
+      }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/luma-dream-machine/ray-2",
+    "name": "Luma Ray 2",
+    "endpoint": "fal-ai/luma-dream-machine/ray-2",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      }
+    }
+  },
+{
+    "provider": "muapi",
     "id": "seedance-lite-t2v",
     "name": "Seedance Lite",
     "inputs": {
@@ -2120,7 +2639,8 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "480p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-pro-t2v",
     "name": "Seedance Pro",
     "inputs": {
@@ -2130,7 +2650,8 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "480p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-pro-t2v-fast",
     "name": "Seedance Pro Fast",
     "inputs": {
@@ -2140,7 +2661,8 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "480p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-v1.5-pro-t2v",
     "name": "Seedance v1.5 Pro",
     "inputs": {
@@ -2150,7 +2672,8 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-v1.5-pro-t2v-fast",
     "name": "Seedance v1.5 Pro Fast",
     "inputs": {
@@ -2160,7 +2683,8 @@ export const t2vModels = [
       "resolution": { "enum": ["720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-v2.0-t2v",
     "name": "Seedance 2.0",
     "inputs": {
@@ -2170,7 +2694,8 @@ export const t2vModels = [
       "quality": { "enum": ["high", "basic"], "title": "Quality", "name": "quality", "type": "string", "description": "Quality of the generated video.", "default": "basic" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-v2.0-extend",
     "name": "Seedance 2.0 Extend",
     "requiresRequestId": true,
@@ -2181,7 +2706,8 @@ export const t2vModels = [
       "quality": { "enum": ["high", "basic"], "title": "Quality", "name": "quality", "type": "string", "description": "Quality of the generated video.", "default": "basic" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.1-master-t2v",
     "name": "Kling v2.1 Master",
     "inputs": {
@@ -2190,7 +2716,8 @@ export const t2vModels = [
       "duration": { "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 5 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.5-turbo-pro-t2v",
     "name": "Kling v2.5 Turbo Pro",
     "inputs": {
@@ -2199,7 +2726,8 @@ export const t2vModels = [
       "duration": { "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 5 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.6-pro-t2v",
     "name": "Kling v2.6 Pro",
     "inputs": {
@@ -2208,7 +2736,8 @@ export const t2vModels = [
       "duration": { "enum": [5, 10], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds.", "default": 5 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-o1-text-to-video",
     "name": "Kling O1 Pro",
     "inputs": {
@@ -2217,7 +2746,8 @@ export const t2vModels = [
       "duration": { "enum": [5, 10], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 5 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v3.0-pro-text-to-video",
     "name": "Kling v3.0 Pro",
     "inputs": {
@@ -2226,7 +2756,8 @@ export const t2vModels = [
       "duration": { "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 5 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v3.0-standard-text-to-video",
     "name": "Kling v3.0 Standard",
     "inputs": {
@@ -2235,7 +2766,8 @@ export const t2vModels = [
       "duration": { "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 5 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3-text-to-video",
     "name": "Veo 3",
     "inputs": {
@@ -2243,7 +2775,8 @@ export const t2vModels = [
       "aspect_ratio": { "enum": ["16:9", "9:16"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3-fast-text-to-video",
     "name": "Veo 3 Fast",
     "inputs": {
@@ -2251,7 +2784,8 @@ export const t2vModels = [
       "aspect_ratio": { "enum": ["16:9", "9:16"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3.1-text-to-video",
     "name": "Veo 3.1",
     "inputs": {
@@ -2261,7 +2795,8 @@ export const t2vModels = [
       "resolution": { "enum": ["1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "1080p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3.1-fast-text-to-video",
     "name": "Veo 3.1 Fast",
     "inputs": {
@@ -2271,7 +2806,8 @@ export const t2vModels = [
       "resolution": { "enum": ["1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "1080p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3.1-lite-text-to-video",
     "name": "Veo 3.1 Lite",
     "inputs": {
@@ -2281,7 +2817,8 @@ export const t2vModels = [
       "resolution": { "enum": ["1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "1080p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "runway-text-to-video",
     "name": "Runway Gen-3",
     "inputs": {
@@ -2291,7 +2828,8 @@ export const t2vModels = [
       "resolution": { "enum": ["720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video. If 1080p is selected, 8-second video cannot be generated.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.1-text-to-video",
     "name": "Wan 2.1",
     "inputs": {
@@ -2302,7 +2840,8 @@ export const t2vModels = [
       "quality": { "enum": ["medium", "high"], "title": "Quality", "name": "quality", "type": "string", "description": "The quality of the generated video.", "default": "medium" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.2-text-to-video",
     "name": "Wan 2.2",
     "inputs": {
@@ -2313,7 +2852,8 @@ export const t2vModels = [
       "quality": { "enum": ["medium", "high"], "title": "Quality", "name": "quality", "type": "string", "description": "The quality of the generated video.", "default": "medium" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.2-5b-fast-t2v",
     "name": "Wan 2.2 Fast",
     "inputs": {
@@ -2322,7 +2862,8 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "580p", "720p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "480p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.5-text-to-video",
     "name": "Wan 2.5",
     "inputs": {
@@ -2332,7 +2873,8 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "480p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.5-text-to-video-fast",
     "name": "Wan 2.5 Fast",
     "inputs": {
@@ -2342,7 +2884,8 @@ export const t2vModels = [
       "resolution": { "enum": ["720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.6-text-to-video",
     "name": "Wan 2.6",
     "inputs": {
@@ -2352,7 +2895,8 @@ export const t2vModels = [
       "resolution": { "enum": ["720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "hunyuan-text-to-video",
     "name": "Hunyuan",
     "inputs": {
@@ -2360,7 +2904,8 @@ export const t2vModels = [
       "aspect_ratio": { "enum": ["16:9", "9:16", "1:1"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "hunyuan-fast-text-to-video",
     "name": "Hunyuan Fast",
     "inputs": {
@@ -2368,7 +2913,8 @@ export const t2vModels = [
       "aspect_ratio": { "enum": ["16:9", "9:16", "1:1"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "pixverse-v4.5-t2v",
     "name": "Pixverse v4.5",
     "inputs": {
@@ -2378,7 +2924,8 @@ export const t2vModels = [
       "resolution": { "enum": ["360p", "540p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "pixverse-v5-t2v",
     "name": "Pixverse v5",
     "inputs": {
@@ -2388,7 +2935,8 @@ export const t2vModels = [
       "resolution": { "enum": ["360p", "540p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "pixverse-v5.5-t2v",
     "name": "Pixverse v5.5",
     "inputs": {
@@ -2398,7 +2946,8 @@ export const t2vModels = [
       "resolution": { "enum": ["360p", "540p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "360p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-02-standard-t2v",
     "name": "Hailuo 02 Standard",
     "inputs": {
@@ -2407,7 +2956,8 @@ export const t2vModels = [
       "resolution": { "enum": ["768P"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "768P" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-02-pro-t2v",
     "name": "Hailuo 02 Pro",
     "inputs": {
@@ -2416,7 +2966,8 @@ export const t2vModels = [
       "resolution": { "enum": ["1080P"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "1080P" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-2.3-pro-t2v",
     "name": "Hailuo 2.3 Pro",
     "inputs": {
@@ -2424,7 +2975,8 @@ export const t2vModels = [
       "resolution": { "enum": ["1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "1080p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-2.3-standard-t2v",
     "name": "Hailuo 2.3 Standard",
     "inputs": {
@@ -2432,7 +2984,8 @@ export const t2vModels = [
       "duration": { "enum": [6, 10], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 6 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "openai-sora",
     "name": "Sora",
     "inputs": {
@@ -2441,7 +2994,8 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "480p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "openai-sora-2-text-to-video",
     "name": "Sora 2",
     "inputs": {
@@ -2450,7 +3004,8 @@ export const t2vModels = [
       "duration": { "enum": [10, 15], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 10 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "openai-sora-2-pro-text-to-video",
     "name": "Sora 2 Pro",
     "inputs": {
@@ -2460,7 +3015,8 @@ export const t2vModels = [
       "resolution": { "enum": ["720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vidu-v2.0-t2v",
     "name": "Vidu v2.0",
     "inputs": {
@@ -2470,7 +3026,8 @@ export const t2vModels = [
       "resolution": { "enum": ["1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "1080p" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ovi-text-to-video",
     "name": "OVI",
     "inputs": {
@@ -2478,7 +3035,8 @@ export const t2vModels = [
       "aspect_ratio": { "enum": ["16:9", "9:16"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "grok-imagine-text-to-video",
     "name": "Grok Imagine",
     "inputs": {
@@ -2488,7 +3046,8 @@ export const t2vModels = [
       "duration": { "enum": [6, 10, 15], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds.", "default": 6 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2-pro-text-to-video",
     "name": "LTX 2 Pro",
     "inputs": {
@@ -2496,7 +3055,8 @@ export const t2vModels = [
       "duration": { "enum": [6, 8, 10], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 6 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2-fast-text-to-video",
     "name": "LTX 2 Fast",
     "inputs": {
@@ -2504,7 +3064,8 @@ export const t2vModels = [
       "duration": { "enum": [6, 8, 10, 12, 14, 16, 18, 20], "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 6 }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2-19b-text-to-video",
     "name": "LTX 2 19B",
     "inputs": {
@@ -2514,6 +3075,7 @@ export const t2vModels = [
       "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "720p" }
     }
   }
+
 ];
 
 export const getVideoModelById = (id) => t2vModels.find(m => m.id === id);
@@ -2545,6 +3107,149 @@ export const getResolutionsForVideoModel = (modelId) => {
 // Auto-generated from schema_data.json — Image to Image models
 export const i2iModels = [
   {
+    "provider": "fal",
+    "id": "fal-ai/nano-banana",
+    "name": "Nano Banana",
+    "endpoint": "fal-ai/nano-banana",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_url": { "type": "string", "title": "Image URL", "name": "image_url", "field": "image" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9", "3:2", "2:3", "5:4", "4:5", "21:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/nano-banana-pro",
+    "name": "Nano Banana Pro",
+    "endpoint": "fal-ai/nano-banana-pro",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_url": { "type": "string", "title": "Image URL", "name": "image_url", "field": "image" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9", "3:2", "2:3", "5:4", "4:5", "21:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/nano-banana-2",
+    "name": "Nano Banana 2",
+    "endpoint": "fal-ai/nano-banana-2",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_url": { "type": "string", "title": "Image URL", "name": "image_url", "field": "image" },
+      "aspect_ratio": { "enum": ["1:1", "3:4", "4:3", "9:16", "16:9", "3:2", "2:3", "5:4", "4:5", "21:9"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/v1.1-ultra-redux",
+    "name": "FLUX1.1 [pro] Ultra Redux",
+    "endpoint": "fal-ai/flux-pro/v1.1-ultra-redux",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_url": { "type": "string", "title": "Image URL", "name": "image_url", "field": "image" },
+      "aspect_ratio": { "enum": ["21:9", "16:9", "4:3", "3:2", "1:1", "2:3", "3:4", "9:16", "9:21"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/kontext/max",
+    "name": "FLUX.1 Kontext [max]",
+    "endpoint": "fal-ai/flux-pro/kontext/max",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_url": { "type": "string", "title": "Image URL", "name": "image_url", "field": "image" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "3:4", "4:3"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-2/image-to-image",
+    "name": "Flux 2 [dev] i2i",
+    "endpoint": "fal-ai/flux-2/image-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_url": { "type": "string", "title": "Image URL", "name": "image_url", "field": "image" },
+      "image_size": { "enum": ["square_hd", "square", "portrait_4_5", "portrait_16_9", "landscape_4_3", "landscape_16_9"], "default": "square_hd" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/kling-image/v3/image-to-image",
+    "name": "Kling Image v3 i2i",
+    "endpoint": "fal-ai/kling-image/v3/image-to-image",
+    "inputs": {
+      "prompt": { "type": "string", "title": "Prompt", "name": "prompt" },
+      "image_url": { "type": "string", "title": "Image URL", "name": "image_url", "field": "image" },
+      "aspect_ratio": { "enum": ["1:1", "16:9", "9:16", "4:3", "3:4", "2:3", "3:2"], "default": "1:1" }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/v1/fill",
+    "name": "FLUX.1 [pro] Fill",
+    "endpoint": "fal-ai/flux-pro/v1/fill",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "image_url": {
+        "type": "string",
+        "title": "Image URL",
+        "name": "image_url",
+        "field": "image"
+      },
+      "mask_url": {
+        "type": "string",
+        "title": "Mask URL",
+        "name": "mask_url",
+        "field": "mask"
+      },
+      "image_size": {
+        "enum": [
+          "square_hd",
+          "square",
+          "portrait_4_5",
+          "portrait_16_9",
+          "landscape_4_3",
+          "landscape_16_9"
+        ],
+        "default": "square_hd"
+      }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/flux-pro/kontext",
+    "name": "FLUX.1 [pro] Kontext",
+    "endpoint": "fal-ai/flux-pro/kontext",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "image_url": {
+        "type": "string",
+        "title": "Image URL",
+        "name": "image_url",
+        "field": "image"
+      },
+      "aspect_ratio": {
+        "enum": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "3:4",
+          "4:3"
+        ],
+        "default": "1:1"
+      }
+    }
+  },
+{
+    "provider": "muapi",
     "id": "ai-image-upscaler",
     "name": "AI Image Upscaler",
     "endpoint": "ai-image-upscale",
@@ -2553,7 +3258,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-image-face-swap",
     "name": "AI Image Face Swap",
     "endpoint": "ai-image-face-swap",
@@ -2573,7 +3279,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-dress-change",
     "name": "AI Dress Change",
     "endpoint": "ai-dress-change",
@@ -2582,7 +3289,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-background-remover",
     "name": "AI Background Remover",
     "endpoint": "ai-background-remover",
@@ -2591,7 +3299,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-product-shot",
     "name": "AI Product Shot",
     "endpoint": "ai-product-shot",
@@ -2610,7 +3319,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-skin-enhancer",
     "name": "AI Skin Enhancer",
     "endpoint": "ai-skin-enhancer",
@@ -2619,7 +3329,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-color-photo",
     "name": "AI Color Photo",
     "endpoint": "ai-color-photo",
@@ -2628,7 +3339,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-kontext-dev-i2i",
     "name": "Flux Kontext Dev I2I",
     "endpoint": "flux-kontext-dev-i2i",
@@ -2676,7 +3388,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-product-photography",
     "name": "AI Product Photography",
     "endpoint": "ai-product-photography",
@@ -2695,7 +3408,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-ghibli-style",
     "name": "AI Ghibli Style",
     "endpoint": "ai-ghibli-style",
@@ -2704,7 +3418,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-image-extension",
     "name": "AI Image Extension",
     "endpoint": "ai-image-extension",
@@ -2713,7 +3428,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "ai-object-eraser",
     "name": "AI Object Eraser",
     "endpoint": "ai-object-eraser",
@@ -2722,7 +3438,8 @@ export const i2iModels = [
     "hasPrompt": false,
     "inputs": {}
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-kontext-pro-i2i",
     "name": "Flux Kontext Pro I2I",
     "endpoint": "flux-kontext-pro-i2i",
@@ -2758,7 +3475,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-kontext-max-i2i",
     "name": "Flux Kontext Max I2I",
     "endpoint": "flux-kontext-max-i2i",
@@ -2794,7 +3512,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "gpt4o-image-to-image",
     "name": "GPT-4o Image To Image",
     "endpoint": "gpt4o-image-to-image",
@@ -2838,7 +3557,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "gpt4o-edit",
     "name": "GPT-4o Edit",
     "endpoint": "gpt4o-edit",
@@ -2881,7 +3601,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "midjourney-v7-image-to-image",
     "name": "Midjourney v7 Image To Image",
     "endpoint": "midjourney-v7-image-to-image",
@@ -2962,7 +3683,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "bytedance-seededit-v3",
     "name": "Bytedance Seededit v3",
     "endpoint": "bytedance-seededit-image",
@@ -2981,7 +3703,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "midjourney-v7-style-reference",
     "name": "Midjourney v7 Style Reference",
     "endpoint": "midjourney-v7-style-reference",
@@ -3062,7 +3785,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "midjourney-v7-omni-reference",
     "name": "Midjourney v7 Omni Reference",
     "endpoint": "midjourney-v7-omni-reference",
@@ -3153,7 +3877,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-image-01-subject-reference",
     "name": "Minimax Image 01 Subject Reference",
     "endpoint": "minimax-01-subject-reference",
@@ -3199,7 +3924,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ideogram-character",
     "name": "Ideogram Character",
     "endpoint": "ideogram-character",
@@ -3266,7 +3992,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-pulid",
     "name": "Flux Pulid",
     "endpoint": "flux-pulid",
@@ -3299,7 +4026,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "qwen-image-edit",
     "name": "Qwen Image Edit",
     "endpoint": "qwen-image-edit",
@@ -3336,7 +4064,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "image-effects",
     "name": "Image Effects",
     "endpoint": "image-effects",
@@ -3373,7 +4102,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "nano-banana-edit",
     "name": "Nano Banana Edit",
     "endpoint": "nano-banana-edit",
@@ -3413,7 +4143,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ideogram-v3-reframe",
     "name": "Ideogram v3 Reframe",
     "endpoint": "ideogram-v3-reframe",
@@ -3472,7 +4203,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "bytedance-seedream-edit-v4",
     "name": "Bytedance Seedream Edit v4",
     "endpoint": "bytedance-seedream-edit-v4",
@@ -3531,7 +4263,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "nano-banana-effects",
     "name": "Nano Banana Effects",
     "endpoint": "nano-banana-effects",
@@ -3587,7 +4320,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-kontext-effects",
     "name": "Flux Kontext Effects",
     "endpoint": "flux-kontext-effects",
@@ -3628,7 +4362,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-redux",
     "name": "Flux Redux",
     "endpoint": "flux-redux",
@@ -3675,7 +4410,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "qwen-image-edit-plus",
     "name": "Qwen Image Edit Plus",
     "endpoint": "qwen-image-edit-plus",
@@ -3715,7 +4451,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.5-image-edit",
     "name": "Wan2.5 Image Edit",
     "endpoint": "wan2.5-image-edit",
@@ -3755,7 +4492,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "higgsfield-soul-image-to-image",
     "name": "Higgsfield Soul Image To Image",
     "endpoint": "higgsfield-soul-image-to-image",
@@ -3928,7 +4666,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "reve-image-edit",
     "name": "Reve Image Edit",
     "endpoint": "reve-image-edit",
@@ -3947,7 +4686,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "topaz-image-upscale",
     "name": "Topaz Image Upscale",
     "endpoint": "topaz-image-upscale",
@@ -3970,7 +4710,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedvr2-image-upscale",
     "name": "Seedvr2 Image Upscale",
     "endpoint": "seedvr2-image-upscale",
@@ -3992,7 +4733,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "qwen-image-edit-plus-lora",
     "name": "Qwen Image Edit Plus Lora",
     "endpoint": "qwen-image-edit-plus-lora",
@@ -4060,7 +4802,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "nano-banana-pro-edit",
     "name": "Nano Banana Pro Edit",
     "endpoint": "nano-banana-pro-edit",
@@ -4111,7 +4854,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "image-passthrough",
     "name": "Image Passthrough",
     "endpoint": "image-passthrough",
@@ -4127,7 +4871,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-o1-edit-image",
     "name": "Kling O1 Edit Image",
     "endpoint": "kling-o1-edit-image",
@@ -4176,7 +4921,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-2-dev-edit",
     "name": "Flux 2 Dev Edit",
     "endpoint": "flux-2-dev-edit",
@@ -4216,7 +4962,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-2-flex-edit",
     "name": "Flux 2 Flex Edit",
     "endpoint": "flux-2-flex-edit",
@@ -4264,7 +5011,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-2-pro-edit",
     "name": "Flux 2 Pro Edit",
     "endpoint": "flux-2-pro-edit",
@@ -4312,7 +5060,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vidu-q2-reference-to-image",
     "name": "Vidu Q2 Reference To Image",
     "endpoint": "vidu-q2-reference-to-image",
@@ -4362,7 +5111,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "bytedance-seedream-v4.5-edit",
     "name": "Bytedance Seedream v4.5 Edit",
     "endpoint": "bytedance-seedream-v4.5-edit",
@@ -4410,7 +5160,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "qwen-image-edit-2511",
     "name": "Qwen Image Edit 2511",
     "endpoint": "qwen-image-edit-2511",
@@ -4450,7 +5201,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.6-image-edit",
     "name": "Wan2.6 Image Edit",
     "endpoint": "wan2.6-image-edit",
@@ -4470,7 +5222,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "qwen-text-to-image-2512",
     "name": "Qwen Text To Image 2512",
     "endpoint": "qwen-text-to-image-2512",
@@ -4509,7 +5262,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "gpt-image-1.5-edit",
     "name": "Gpt Image 1.5 Edit",
     "endpoint": "gpt-image-1.5-edit",
@@ -4553,7 +5307,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "grok-imagine-image-to-image",
     "name": "Grok Imagine Image To Image",
     "endpoint": "grok-imagine-image-to-image",
@@ -4572,7 +5327,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "Api Node",
     "name": "Api Node",
     "endpoint": "Api Node",
@@ -4600,7 +5356,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-2-klein-4b-edit",
     "name": "Flux 2 Klein 4b Edit",
     "endpoint": "flux-2-klein-4b-edit",
@@ -4636,7 +5393,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "flux-2-klein-9b-edit",
     "name": "Flux 2 Klein 9b Edit",
     "endpoint": "flux-2-klein-9b-edit",
@@ -4672,7 +5430,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "add-image-watermark",
     "name": "Add Image Watermark",
     "endpoint": "add-image-watermark",
@@ -4710,7 +5469,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "nano-banana-2-edit",
     "name": "Nano Banana 2 Edit",
     "endpoint": "nano-banana-2-edit",
@@ -4764,7 +5524,8 @@ export const i2iModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedream-5.0-edit",
     "name": "Seedream 5.0 Edit",
     "endpoint": "seedream-5.0-edit",
@@ -4799,11 +5560,32 @@ export const i2iModels = [
       }
     }
   }
+
 ];
 
 // Auto-generated from schema_data.json — Image to Video models
 export const i2vModels = [
   {
+    "provider": "fal",
+    "id": "fal-ai/wan-i2v",
+    "name": "Wan 2.1 I2V",
+    "endpoint": "fal-ai/wan-i2v",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt"
+      },
+      "image_url": {
+        "type": "string",
+        "title": "Image URL",
+        "name": "image_url",
+        "field": "image"
+      }
+    }
+  },
+{
+    "provider": "muapi",
     "id": "ai-video-effects",
     "name": "AI Video Effects",
     "endpoint": "generate_wan_ai_effects",
@@ -4940,7 +5722,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "motion-controls",
     "name": "Motion Controls",
     "endpoint": "generate_wan_ai_effects",
@@ -5060,7 +5843,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vfx",
     "name": "VFX",
     "endpoint": "generate_wan_ai_effects",
@@ -5142,7 +5926,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3-image-to-video",
     "name": "Veo3 Image To Video",
     "endpoint": "veo3-image-to-video",
@@ -5172,7 +5957,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3-fast-image-to-video",
     "name": "Veo3 Fast Image To Video",
     "endpoint": "veo3-fast-image-to-video",
@@ -5202,7 +5988,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "runway-image-to-video",
     "name": "Runway Image To Video",
     "endpoint": "runway-image-to-video",
@@ -5257,7 +6044,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.1-image-to-video",
     "name": "Wan2.1 Image To Video",
     "endpoint": "wan2.1-image-to-video",
@@ -5319,7 +6107,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "midjourney-v7-image-to-video",
     "name": "Midjourney v7 Image To Video",
     "endpoint": "midjourney-v7-image-to-video",
@@ -5411,7 +6200,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "hunyuan-image-to-video",
     "name": "Hunyuan Image To Video",
     "endpoint": "hunyuan-image-to-video",
@@ -5442,7 +6232,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.1-master-i2v",
     "name": "Kling v2.1 Master I2V",
     "endpoint": "kling-v2.1-master-i2v",
@@ -5483,7 +6274,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.1-standard-i2v",
     "name": "Kling v2.1 Standard I2V",
     "endpoint": "kling-v2.1-standard-i2v",
@@ -5524,7 +6316,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.1-pro-i2v",
     "name": "Kling v2.1 Pro I2V",
     "endpoint": "kling-v2.1-pro-i2v",
@@ -5565,7 +6358,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.2-image-to-video",
     "name": "Wan2.2 Image To Video",
     "endpoint": "wan2.2-image-to-video",
@@ -5627,7 +6421,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "runway-act-two-i2v",
     "name": "Runway Act Two I2V",
     "endpoint": "runway-act-two-i2v",
@@ -5652,7 +6447,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "pixverse-v4.5-i2v",
     "name": "Pixverse v4.5 I2V",
     "endpoint": "pixverse-v4.5-i2v",
@@ -5708,7 +6504,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vidu-v2.0-i2v",
     "name": "Vidu v2.0 I2V",
     "endpoint": "vidu-v2.0-i2v",
@@ -5760,7 +6557,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vidu-q1-reference",
     "name": "Vidu Q1 Reference",
     "endpoint": "vidu-q1-reference",
@@ -5791,7 +6589,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-02-standard-i2v",
     "name": "Minimax Hailuo 02 Standard I2V",
     "endpoint": "minimax-hailuo-02-standard-i2v",
@@ -5832,7 +6631,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-02-pro-i2v",
     "name": "Minimax Hailuo 02 Pro I2V",
     "endpoint": "minimax-hailuo-02-pro-i2v",
@@ -5871,7 +6671,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "video-effects",
     "name": "Video Effects",
     "endpoint": "video-effects",
@@ -5931,7 +6732,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-lite-i2v",
     "name": "Seedance Lite I2V",
     "endpoint": "seedance-lite-i2v",
@@ -5979,7 +6781,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-pro-i2v",
     "name": "Seedance Pro I2V",
     "endpoint": "seedance-pro-i2v",
@@ -6027,7 +6830,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "pixverse-v5-i2v",
     "name": "Pixverse v5 I2V",
     "endpoint": "pixverse-v5-i2v",
@@ -6083,7 +6887,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-lite-reference-video",
     "name": "Seedance Lite Reference Video",
     "endpoint": "seedance-lite-reference-to-video",
@@ -6123,7 +6928,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.1-reference-video",
     "name": "Wan2.1 Reference Video",
     "endpoint": "wan2.1-reference-video",
@@ -6174,7 +6980,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.5-turbo-pro-i2v",
     "name": "Kling v2.5 Turbo Pro I2V",
     "endpoint": "kling-v2.5-turbo-pro-i2v",
@@ -6203,7 +7010,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.5-image-to-video",
     "name": "Wan2.5 Image To Video",
     "endpoint": "wan2.5-image-to-video",
@@ -6244,7 +7052,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.5-image-to-video-fast",
     "name": "Wan2.5 Image To Video Fast",
     "endpoint": "wan2.5-image-to-video-fast",
@@ -6284,7 +7093,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "openai-sora-2-image-to-video",
     "name": "Openai Sora 2 Image To Video",
     "endpoint": "openai-sora-2-image-to-video",
@@ -6332,7 +7142,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ovi-image-to-video",
     "name": "Ovi Image To Video",
     "endpoint": "ovi-image-to-video",
@@ -6351,7 +7162,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "openai-sora-2-pro-image-to-video",
     "name": "Openai Sora 2 Pro Image To Video",
     "endpoint": "openai-sora-2-pro-image-to-video",
@@ -6411,7 +7223,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "leonardoai-motion-2.0",
     "name": "Leonardoai Motion 2.0",
     "endpoint": "leonardoai-motion-2.0",
@@ -6441,7 +7254,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "higgsfield-dop-image-to-video",
     "name": "Higgsfield Dop Image To Video",
     "endpoint": "higgsfield-dop-image-to-video",
@@ -6612,7 +7426,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3.1-image-to-video",
     "name": "Veo3.1 Image To Video",
     "endpoint": "veo3.1-image-to-video",
@@ -6662,7 +7477,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3.1-fast-image-to-video",
     "name": "Veo3.1 Fast Image To Video",
     "endpoint": "veo3.1-fast-image-to-video",
@@ -6712,7 +7528,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3.1-lite-image-to-video",
     "name": "Veo3.1 Lite Image To Video",
     "endpoint": "veo3.1-lite-image-to-video",
@@ -6759,7 +7576,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "veo3.1-reference-to-video",
     "name": "Veo3.1 Reference To Video",
     "endpoint": "veo3.1-reference-to-video",
@@ -6806,7 +7624,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-pro-i2v-fast",
     "name": "Seedance Pro I2V Fast",
     "endpoint": "seedance-pro-i2v-fast",
@@ -6854,7 +7673,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2-pro-image-to-video",
     "name": "Ltx 2 Pro Image To Video",
     "endpoint": "ltx-2-pro-image-to-video",
@@ -6892,7 +7712,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2-fast-image-to-video",
     "name": "Ltx 2 Fast Image To Video",
     "endpoint": "ltx-2-fast-image-to-video",
@@ -6935,7 +7756,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vidu-q2-reference",
     "name": "Vidu Q2 Reference",
     "endpoint": "vidu-q2-reference",
@@ -7004,7 +7826,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vidu-q2-turbo-start-end-video",
     "name": "Vidu Q2 Turbo Start End Video",
     "endpoint": "vidu-q2-turbo-start-end-video",
@@ -7064,7 +7887,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "vidu-q2-pro-start-end-video",
     "name": "Vidu Q2 Pro Start End Video",
     "endpoint": "vidu-q2-pro-start-end-video",
@@ -7124,7 +7948,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-2.3-pro-i2v",
     "name": "Minimax Hailuo 2.3 Pro I2V",
     "endpoint": "minimax-hailuo-2.3-pro-i2v",
@@ -7153,7 +7978,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-2.3-standard-i2v",
     "name": "Minimax Hailuo 2.3 Standard I2V",
     "endpoint": "minimax-hailuo-2.3-standard-i2v",
@@ -7183,7 +8009,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "minimax-hailuo-2.3-fast",
     "name": "Minimax Hailuo 2.3 Fast",
     "endpoint": "minimax-hailuo-2.3-fast",
@@ -7220,7 +8047,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.5-turbo-std-i2v",
     "name": "Kling v2.5 Turbo Std I2V",
     "endpoint": "kling-v2.5-turbo-std-i2v",
@@ -7249,7 +8077,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "grok-imagine-image-to-video",
     "name": "Grok Imagine Image To Video",
     "endpoint": "grok-imagine-image-to-video",
@@ -7292,7 +8121,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-o1-image-to-video",
     "name": "Kling O1 Image To Video",
     "endpoint": "kling-o1-image-to-video",
@@ -7334,7 +8164,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-o1-reference-to-video",
     "name": "Kling O1 Reference To Video",
     "endpoint": "kling-o1-reference-to-video",
@@ -7382,7 +8213,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v2.6-pro-i2v",
     "name": "Kling v2.6 Pro I2V",
     "endpoint": "kling-v2.6-pro-i2v",
@@ -7419,7 +8251,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "pixverse-v5.5-i2v",
     "name": "Pixverse v5.5 I2V",
     "endpoint": "pixverse-v5.5-i2v",
@@ -7518,7 +8351,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.2-spicy-image-to-video",
     "name": "Wan2.2 Spicy Image To Video",
     "endpoint": "wan2.2-spicy-image-to-video",
@@ -7559,7 +8393,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.6-image-to-video",
     "name": "Wan2.6 Image To Video",
     "endpoint": "wan2.6-image-to-video",
@@ -7612,7 +8447,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-o1-standard-image-to-video",
     "name": "Kling O1 Standard Image To Video",
     "endpoint": "kling-o1-standard-image-to-video",
@@ -7642,7 +8478,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-o1-standard-reference-to-video",
     "name": "Kling O1 Standard Reference To Video",
     "endpoint": "kling-o1-standard-reference-to-video",
@@ -7684,7 +8521,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-v1.5-pro-i2v",
     "name": "Seedance v1.5 Pro I2V",
     "endpoint": "seedance-v1.5-pro-i2v",
@@ -7754,7 +8592,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-v1.5-pro-i2v-fast",
     "name": "Seedance v1.5 Pro I2V Fast",
     "endpoint": "seedance-v1.5-pro-i2v-fast",
@@ -7823,7 +8662,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2-19b-image-to-video",
     "name": "Ltx 2 19b Image To Video",
     "endpoint": "ltx-2-19b-image-to-video",
@@ -7864,7 +8704,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v3.0-pro-image-to-video",
     "name": "Kling v3.0 Pro Image To Video",
     "endpoint": "kling-v3.0-pro-image-to-video",
@@ -7900,7 +8741,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "kling-v3.0-standard-image-to-video",
     "name": "Kling v3.0 Standard Image To Video",
     "endpoint": "kling-v3.0-standard-image-to-video",
@@ -7936,7 +8778,8 @@ export const i2vModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "seedance-v2.0-i2v",
     "name": "Seedance 2.0 I2V",
     "endpoint": "seedance-v2.0-i2v",
@@ -7976,6 +8819,7 @@ export const i2vModels = [
       }
     }
   }
+
 ];
 
 export const getI2IModelById = (id) => i2iModels.find(m => m.id === id);
@@ -8070,6 +8914,7 @@ export const getMaxImagesForI2IModel = (modelId) => {
 // ─── Video-to-Video models ────────────────────────────────────────────────────
 export const v2vModels = [
   {
+    "provider": "muapi",
     "id": "video-watermark-remover",
     "name": "AI Video Watermark Remover",
     "endpoint": "video-watermark-remover",
@@ -8079,6 +8924,7 @@ export const v2vModels = [
     "description": "Remove watermarks, logos, captions, and unwanted text from videos."
   },
   {
+    "provider": "muapi",
     "id": "kling-v2.6-std-motion-control",
     "name": "Kling 2.6 Std Motion Control",
     "endpoint": "kling-v2.6-std-motion-control",
@@ -8089,6 +8935,7 @@ export const v2vModels = [
     "description": "Kling v2.6 Pro Motion Control allows precise control over camera movement, subject motion, and scene dynamics during video generation."
   },
   {
+    "provider": "muapi",
     "id": "kling-v3.0-std-motion-control",
     "name": "Kling 3.0 Std Motion Control",
     "endpoint": "kling-v3.0-std-motion-control",
@@ -8099,6 +8946,7 @@ export const v2vModels = [
     "description": "Kling V3.0 Standard Motion Control allows for precise control over the camera and subject movement in generated videos."
   },
   {
+    "provider": "muapi",
     "id": "kling-v3.0-pro-motion-control",
     "name": "Kling 3.0 Pro Motion Control",
     "endpoint": "kling-v3.0-pro-motion-control",
@@ -8114,8 +8962,45 @@ export const v2vModels = [
 // Image-based: portrait image + audio → talking video
 // Video-based: existing video + audio → lipsync video
 export const lipsyncModels = [
-  // ── Image + Audio → Video ──────────────────────────────────────────────────
   {
+    "provider": "fal",
+    "id": "fal-ai/sync-lipsync/v3",
+    "name": "Sync v3 Pro",
+    "endpoint": "fal-ai/sync-lipsync/v3",
+    "inputs": {
+      "audio_url": {
+        "type": "string",
+        "title": "Audio URL",
+        "name": "audio_url"
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video URL",
+        "name": "video_url"
+      }
+    }
+  },
+  {
+    "provider": "fal",
+    "id": "fal-ai/kling-video/lipsync/audio-to-video",
+    "name": "Kling LipSync",
+    "endpoint": "fal-ai/kling-video/lipsync/audio-to-video",
+    "inputs": {
+      "audio_url": {
+        "type": "string",
+        "title": "Audio URL",
+        "name": "audio_url"
+      },
+      "image_url": {
+        "type": "string",
+        "title": "Image URL",
+        "name": "image_url"
+      }
+    }
+  },
+// ── Image + Audio → Video ──────────────────────────────────────────────────
+  {
+    "provider": "muapi",
     "id": "infinitetalk-image-to-video",
     "name": "Infinite Talk",
     "endpoint": "infinitetalk-image-to-video",
@@ -8133,7 +9018,8 @@ export const lipsyncModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "wan2.2-speech-to-video",
     "name": "Wan 2.2 Speech to Video",
     "endpoint": "wan2.2-speech-to-video",
@@ -8151,7 +9037,8 @@ export const lipsyncModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2.3-lipsync",
     "name": "LTX 2.3 Lipsync",
     "endpoint": "ltx-2.3-lipsync",
@@ -8170,7 +9057,8 @@ export const lipsyncModels = [
       }
     }
   },
-  {
+{
+    "provider": "muapi",
     "id": "ltx-2-19b-lipsync",
     "name": "LTX 2 19B Lipsync",
     "endpoint": "ltx-2-19b-lipsync",
@@ -8190,6 +9078,7 @@ export const lipsyncModels = [
   },
   // ── Video + Audio → Video ──────────────────────────────────────────────────
   {
+    "provider": "muapi",
     "id": "sync-lipsync",
     "name": "Sync Lipsync",
     "endpoint": "sync-lipsync",
@@ -8198,7 +9087,8 @@ export const lipsyncModels = [
     "hasPrompt": false,
     "description": "Generate realistic lipsync animations from audio using Sync's advanced algorithms."
   },
-  {
+{
+    "provider": "muapi",
     "id": "latent-sync",
     "name": "LatentSync",
     "endpoint": "latentsync-video",
@@ -8207,7 +9097,8 @@ export const lipsyncModels = [
     "hasPrompt": false,
     "description": "Video-to-video lipsync using LatentSync for high-quality audio-driven lip animations."
   },
-  {
+{
+    "provider": "muapi",
     "id": "creatify-lipsync",
     "name": "Creatify Lipsync",
     "endpoint": "creatify-lipsync",
@@ -8216,7 +9107,8 @@ export const lipsyncModels = [
     "hasPrompt": false,
     "description": "Realistic lipsync video optimized for speed, quality, and consistency by Creatify."
   },
-  {
+{
+    "provider": "muapi",
     "id": "veed-lipsync",
     "name": "Veed Lipsync",
     "endpoint": "veed-lipsync",
@@ -8225,7 +9117,8 @@ export const lipsyncModels = [
     "hasPrompt": false,
     "description": "Generate realistic lipsync from any audio using VEED's latest model."
   },
-  {
+{
+    "provider": "muapi",
     "id": "infinitetalk-video-to-video",
     "name": "Infinite Talk V2V",
     "endpoint": "infinitetalk-video-to-video",
@@ -8243,6 +9136,7 @@ export const lipsyncModels = [
       }
     }
   }
+
 ];
 
 export const getLipSyncModelById = (id) => lipsyncModels.find(m => m.id === id);

@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.planning/
+.env
+CLAUDE.md 
+.gemini/
+.next/
+local-deployment.md
+scripts/

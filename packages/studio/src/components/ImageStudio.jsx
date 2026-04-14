@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { generateImage, generateI2I, uploadFile } from "../muapi.js";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "motion/react";
+import { generate, uploadFile } from "../studioClient.js";
+import GeneratingState from "./GeneratingState.jsx";
+import ModelDropdown from "./ModelDropdown.jsx";
 import {
   t2iModels,
   i2iModels,
@@ -33,9 +37,43 @@ async function downloadImage(url, filename) {
   }
 }
 
+const FAL_LORA_MODEL_ID = "fal-ai/flux-lora";
+
+function getLoraVariantLabel(value) {
+  if (!value) return "";
+
+  try {
+    const parsed = new URL(value);
+    const fileName = parsed.pathname.split("/").filter(Boolean).pop();
+    return fileName || value;
+  } catch {
+    const normalized = value.split("?")[0];
+    const lastSegment = normalized.split("/").filter(Boolean).pop();
+    return lastSegment || value;
+  }
+}
+
+function getModelDisplayName(baseName, modelId, loraPath) {
+  if (modelId !== FAL_LORA_MODEL_ID) return baseName;
+
+  const variantLabel = getLoraVariantLabel(loraPath);
+  if (!variantLabel) return baseName;
+
+  return `${baseName} · ${variantLabel}`;
+}
+
 // ─── UploadButton (inline picker) ───────────────────────────────────────────
 
-function UploadButton({ apiKey, maxImages, onSelect, onClear, initialUrls = [] }) {
+function UploadButton({
+  apiKey,
+  falApiKey,
+  provider,
+  triggerOnboarding,
+  maxImages,
+  onSelect,
+  onClear,
+  initialUrls = [],
+}) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedEntries, setSelectedEntries] = useState([]); // [{url, thumbnail}]
@@ -110,6 +148,22 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear, initialUrls = [] }
     if (!files.length) return;
     e.target.value = "";
 
+    const activeKey = provider === "fal" ? falApiKey : apiKey;
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (
+          confirm(
+            `You need a ${provider} API key to upload images for this model. Would you like to add one now?`,
+          )
+        ) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(`Please provide a ${provider} API key in settings to upload images.`);
+      }
+      return;
+    }
+
     const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
     const tooLarge = files.filter((f) => f.size > MAX_IMAGE_SIZE);
     if (tooLarge.length > 0) {
@@ -135,7 +189,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear, initialUrls = [] }
           setUploadHistory((prev) => [placeholder, ...prev]);
 
           try {
-            const uploadedUrl = await uploadFile(apiKey, file, (pct) => {
+            const uploadedUrl = await uploadFile(provider, activeKey, file, (pct) => {
               setLastUploadProgress(pct);
               setUploadHistory((prev) =>
                 prev.map((h) => (h.id === id ? { ...h, progress: pct } : h)),
@@ -581,96 +635,6 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear, initialUrls = [] }
   );
 }
 
-// ─── ModelDropdown ────────────────────────────────────────────────────────────
-
-function ModelDropdown({ models, selectedModel, onSelect, onClose }) {
-  const [search, setSearch] = useState("");
-
-  const filtered = models.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.id.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  return (
-    <div className="flex flex-col gap-2 h-full max-h-[60vh]">
-      <div className="border-b border-white/5 shrink-0">
-        <div className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-2.5 border border-white/5 focus-within:border-primary/50 transition-colors">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            className="text-muted"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search models..."
-            value={search}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent border-none text-xs text-white focus:ring-0 w-full p-0 focus:outline-none"
-          />
-        </div>
-      </div>
-      <div className="text-xs font-medium text-secondary py-2 shrink-0">
-        Available models
-      </div>
-      <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
-        {filtered.map((m) => (
-          <div
-            key={m.id}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(m);
-              onClose();
-            }}
-            className={`flex items-center justify-between p-3.5 hover:bg-white/5 rounded-lg cursor-pointer transition-all border border-transparent hover:border-white/5 ${
-              selectedModel === m.id ? "bg-white/5 border-white/5" : ""
-            }`}
-          >
-            <div className="flex items-center gap-3.5">
-              <div
-                className={`w-10 h-10 ${
-                  m.family === "kontext"
-                    ? "bg-blue-500/10 text-blue-400"
-                    : m.family === "effects"
-                      ? "bg-purple-500/10 text-purple-400"
-                      : "bg-primary/10 text-primary"
-                } border border-white/5 rounded-full flex items-center justify-center font-bold text-xs shadow-inner uppercase`}
-              >
-                {m.name.charAt(0)}
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-bold text-white tracking-tight">
-                  {m.name}
-                </span>
-              </div>
-            </div>
-            {selectedModel === m.id && (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#d9ff00"
-                strokeWidth="4"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── SimpleDropdown ───────────────────────────────────────────────────────────
 
 function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
@@ -716,6 +680,8 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
 
 export default function ImageStudio({
   apiKey,
+  falApiKey,
+  triggerOnboarding,
   onGenerationComplete,
   historyItems,
 }) {
@@ -733,6 +699,8 @@ export default function ImageStudio({
     return resolutions[0] || null;
   });
   const [maxImages, setMaxImages] = useState(1);
+  const [selectedFalLoraPath, setSelectedFalLoraPath] = useState("");
+  const [selectedFalLoraScale, setSelectedFalLoraScale] = useState("1");
 
   // ── Prompt / upload state ───────────────────────────────────────────────
   const [prompt, setPrompt] = useState("");
@@ -741,6 +709,7 @@ export default function ImageStudio({
   // ── UI state ────────────────────────────────────────────────────────────
   const [dropdownOpen, setDropdownOpen] = useState(null); // 'model' | 'ar' | 'quality' | null
   const [generating, setGenerating] = useState(false);
+  const [statusText, setStatusText] = useState("Processing...");
   const [generateError, setGenerateError] = useState(null);
   const [fullscreenUrl, setFullscreenUrl] = useState(null);
 
@@ -781,6 +750,8 @@ export default function ImageStudio({
         if (data.selectedAr) setSelectedAr(data.selectedAr);
         if (data.selectedQuality) setSelectedQuality(data.selectedQuality);
         if (data.maxImages) setMaxImages(data.maxImages);
+        if (typeof data.selectedFalLoraPath === "string") setSelectedFalLoraPath(data.selectedFalLoraPath);
+        if (typeof data.selectedFalLoraScale === "string") setSelectedFalLoraScale(data.selectedFalLoraScale);
         if (data.prompt) setPrompt(data.prompt);
         if (data.uploadedImageUrls) setUploadedImageUrls(data.uploadedImageUrls);
         if (data.localHistory) setLocalHistory(data.localHistory);
@@ -801,6 +772,8 @@ export default function ImageStudio({
           selectedAr,
           selectedQuality,
           maxImages,
+          selectedFalLoraPath,
+          selectedFalLoraScale,
           prompt,
           uploadedImageUrls,
           localHistory,
@@ -818,6 +791,8 @@ export default function ImageStudio({
     selectedAr,
     selectedQuality,
     maxImages,
+    selectedFalLoraPath,
+    selectedFalLoraScale,
     prompt,
     uploadedImageUrls,
     localHistory,
@@ -825,6 +800,17 @@ export default function ImageStudio({
 
   // ── Derived: current model lists & helpers ───────────────────────────────
   const currentModels = imageMode ? i2iModels : t2iModels;
+  const currentModel = currentModels.find((m) => m.id === selectedModelId);
+  const isFalLoraModel =
+    !imageMode &&
+    currentModel?.provider === "fal" &&
+    currentModel?.id === FAL_LORA_MODEL_ID;
+  const selectedModelDisplayName = getModelDisplayName(
+    currentModel?.name || selectedModelName,
+    selectedModelId,
+    selectedFalLoraPath,
+  );
+  const selectedLoraVariantLabel = getLoraVariantLabel(selectedFalLoraPath);
   const currentAspectRatios = imageMode
     ? getAspectRatiosForI2IModel(selectedModelId)
     : getAspectRatiosForModel(selectedModelId);
@@ -881,6 +867,11 @@ export default function ImageStudio({
 
   // ── Model selection ──────────────────────────────────────────────────────
   const handleModelSelect = (m) => {
+    // Proactive onboarding: check if provider key exists
+    if (m.provider === 'fal' && !falApiKey || (m.provider === 'muapi' || !m.provider) && !apiKey) {
+      triggerOnboarding?.();
+    }
+
     const ars = imageMode
       ? getAspectRatiosForI2IModel(m.id)
       : getAspectRatiosForModel(m.id);
@@ -927,6 +918,20 @@ export default function ImageStudio({
   const handleGenerate = async () => {
     if (generating) return;
 
+    const provider = currentModel?.provider || 'muapi';
+    const activeKey = provider === 'fal' ? falApiKey : apiKey;
+
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (confirm(`You need a ${provider} API key to use this model. Would you like to add one now?`)) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(`Please provide a ${provider} API key in settings to use this model.`);
+      }
+      return;
+    }
+
     if (imageMode) {
       if (uploadedImageUrls.length === 0) {
         alert("Please upload a reference image first.");
@@ -941,32 +946,36 @@ export default function ImageStudio({
 
     setGenerating(true);
     setGenerateError(null);
+    setStatusText("Initializing generation...");
 
     try {
-      let res;
+      const genParams = {
+        model: selectedModelId,
+        provider,
+        onStatusUpdate: (status) => {
+          if (status.message) setStatusText(status.message);
+        }
+      };
+
       if (imageMode) {
-        const genParams = {
-          model: selectedModelId,
-          images_list: uploadedImageUrls,
-          image_url: uploadedImageUrls[0],
-          aspect_ratio: selectedAr,
-        };
-        if (prompt.trim()) genParams.prompt = prompt.trim();
-        if (currentQualityField && selectedQuality) {
-          genParams[currentQualityField] = selectedQuality;
-        }
-        res = await generateI2I(apiKey, genParams);
+        genParams.images_list = uploadedImageUrls;
+        genParams.image_url = uploadedImageUrls[0];
+        genParams.aspect_ratio = selectedAr;
       } else {
-        const genParams = {
-          model: selectedModelId,
-          prompt: prompt.trim(),
-          aspect_ratio: selectedAr,
-        };
-        if (currentQualityField && selectedQuality) {
-          genParams[currentQualityField] = selectedQuality;
-        }
-        res = await generateImage(apiKey, genParams);
+        genParams.prompt = prompt.trim();
+        genParams.aspect_ratio = selectedAr;
       }
+
+      if (currentQualityField && selectedQuality) {
+        genParams[currentQualityField] = selectedQuality;
+      }
+
+      if (isFalLoraModel) {
+        genParams.loraPath = selectedFalLoraPath.trim();
+        genParams.loraScale = selectedFalLoraScale;
+      }
+
+      const res = await generate(genParams, { apiKey: activeKey });
 
       if (res && res.url) {
         const entry = {
@@ -974,15 +983,22 @@ export default function ImageStudio({
           url: res.url,
           prompt: prompt.trim(),
           model: selectedModelId,
+          modelName: currentModel?.name || selectedModelName,
+          modelLabel: selectedModelDisplayName,
+          loraPath: isFalLoraModel ? selectedFalLoraPath.trim() : "",
+          loraScale: isFalLoraModel ? selectedFalLoraScale : "",
           aspect_ratio: selectedAr,
+          provider: res.provider,
           timestamp: new Date().toISOString(),
         };
         addToHistory(entry);
+        toast.success("Generation complete!");
         onGenerationComplete?.({
           url: res.url,
           model: selectedModelId,
           prompt: prompt.trim(),
           type: "image",
+          provider: res.provider,
         });
       } else {
         throw new Error("No image URL returned by API");
@@ -990,9 +1006,11 @@ export default function ImageStudio({
     } catch (e) {
       console.error("[ImageStudio] Generation failed:", e);
       setGenerateError(e.message.slice(0, 80));
+      toast.error(e.message || "Generation failed");
       setTimeout(() => setGenerateError(null), 4000);
     } finally {
       setGenerating(false);
+      setStatusText("Processing...");
     }
   };
 
@@ -1009,7 +1027,13 @@ export default function ImageStudio({
       
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
-        {history.length > 0 ? (
+        {generating ? (
+          <GeneratingState
+            modelName={selectedModelDisplayName}
+            provider={currentModel?.provider || 'muapi'}
+            statusText={statusText}
+          />
+        ) : history.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full pt-4 animate-fade-in-up">
             {history.map((entry, idx) => (
               <div
@@ -1022,6 +1046,17 @@ export default function ImageStudio({
                   className="w-full aspect-square object-cover bg-black/40 cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setFullscreenUrl(entry.url)}
                 />
+
+                {/* Provider Badge */}
+                <div className="absolute top-2 left-2 z-10">
+                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border backdrop-blur-md shadow-lg ${
+                    entry.provider === 'fal' 
+                      ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                      : 'bg-[#d9ff00]/20 text-[#d9ff00] border-[#d9ff00]/30'
+                  }`}>
+                    {entry.provider || 'muapi'}
+                  </span>
+                </div>
                 
                 {/* Overlay actions */}
                 <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1062,11 +1097,24 @@ export default function ImageStudio({
                     {entry.prompt || "No prompt provided"}
                   </p>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded border border-primary/20">
-                      {entry.model?.replace("-", " ")}
-                    </span>
+                  <div className="flex items-center gap-1.5">
+                      <span
+                        className="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded border border-primary/20"
+                        title={entry.modelLabel || entry.modelName || entry.model}
+                      >
+                        {entry.modelLabel || entry.modelName || entry.model?.replaceAll("-", " ")}
+                      </span>
+                      <span className="text-[9px] text-white/30 uppercase font-black tracking-tighter">
+                        via {entry.provider || 'muapi'}
+                      </span>
+                    </div>
                     <span className="text-[10px] text-white/40">{entry.aspect_ratio}</span>
                   </div>
+                  {entry.loraPath && (
+                    <div className="text-[10px] text-white/45 truncate" title={entry.loraPath}>
+                      LoRA: {getLoraVariantLabel(entry.loraPath)}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -1118,6 +1166,9 @@ export default function ImageStudio({
           <div className="flex items-center gap-2">
             <UploadButton
               apiKey={apiKey}
+              falApiKey={falApiKey}
+              provider={currentModel?.provider || "muapi"}
+              triggerOnboarding={triggerOnboarding}
               maxImages={maxImages}
               onSelect={handleUploadSelect}
               onClear={handleUploadClear}
@@ -1135,6 +1186,49 @@ export default function ImageStudio({
               />
             </div>
           </div>
+
+          {isFalLoraModel && (
+            <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.03]">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className="flex-1 flex flex-col gap-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
+                    LoRA Path
+                  </span>
+                  <input
+                    type="text"
+                    value={selectedFalLoraPath}
+                    onChange={(e) => setSelectedFalLoraPath(e.target.value)}
+                    placeholder="https://example.com/style.safetensors"
+                    className="w-full bg-white/[0.03] border border-white/[0.05] rounded-md px-3 py-2 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40"
+                  />
+                </label>
+
+                <label className="w-full sm:w-28 flex flex-col gap-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
+                    Scale
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="2"
+                    step="0.05"
+                    value={selectedFalLoraScale}
+                    onChange={(e) => setSelectedFalLoraScale(e.target.value)}
+                    className="w-full bg-white/[0.03] border border-white/[0.05] rounded-md px-3 py-2 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40"
+                  />
+                </label>
+              </div>
+
+              <div
+                className="text-[10px] text-white/40 truncate"
+                title={selectedFalLoraPath || "No LoRA selected"}
+              >
+                {selectedLoraVariantLabel
+                  ? `Current LoRA: ${selectedLoraVariantLabel}`
+                  : "Current LoRA: none selected"}
+              </div>
+            </div>
+          )}
 
           {/* Bottom row: controls + generate */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-2 border-t border-white/[0.03] relative">
@@ -1154,7 +1248,7 @@ export default function ImageStudio({
                     <span className="text-[9px] font-bold text-black uppercase">G</span>
                   </div>
                   <span className="text-xs font-semibold text-white/70 group-hover:text-[#d9ff00] transition-colors">
-                    {selectedModelName}
+                    {selectedModelDisplayName}
                   </span>
                   <svg
                     width="10"
@@ -1169,20 +1263,26 @@ export default function ImageStudio({
                   </svg>
                 </button>
 
-                {dropdownOpen === "model" && (
-                  <div
-                    ref={dropdownRef}
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-lg p-3 shadow-2xl border border-white/[0.05] w-[calc(100vw-3rem)] max-w-xs"
-                  >
-                    <ModelDropdown
-                      models={currentModels}
-                      selectedModel={selectedModelId}
-                      onSelect={handleModelSelect}
-                      onClose={() => setDropdownOpen(null)}
-                    />
-                  </div>
-                )}
+                <AnimatePresence>
+                  {dropdownOpen === "model" && (
+                    <motion.div
+                      ref={dropdownRef}
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-lg p-3 shadow-2xl border border-white/[0.05] w-[calc(100vw-3rem)] max-w-xs"
+                    >
+                      <ModelDropdown
+                        models={currentModels}
+                        selectedModel={selectedModelId}
+                        onSelect={handleModelSelect}
+                        onClose={() => setDropdownOpen(null)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Aspect ratio button */}
@@ -1203,20 +1303,26 @@ export default function ImageStudio({
                   </span>
                 </button>
 
-                {dropdownOpen === "ar" && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-md p-3 shadow-2xl border border-white/10 min-w-[160px]"
-                  >
-                    <SimpleDropdown
-                      title="Aspect Ratio"
-                      options={currentAspectRatios}
-                      selected={selectedAr}
-                      onSelect={(val) => setSelectedAr(val)}
-                      onClose={() => setDropdownOpen(null)}
-                    />
-                  </div>
-                )}
+                <AnimatePresence>
+                  {dropdownOpen === "ar" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-md p-3 shadow-2xl border border-white/10 min-w-[160px]"
+                    >
+                      <SimpleDropdown
+                        title="Aspect Ratio"
+                        options={currentAspectRatios}
+                        selected={selectedAr}
+                        onSelect={(val) => setSelectedAr(val)}
+                        onClose={() => setDropdownOpen(null)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Quality/resolution button */}
@@ -1238,20 +1344,26 @@ export default function ImageStudio({
                     </span>
                   </button>
 
-                  {dropdownOpen === "quality" && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-[1.5rem] p-3 shadow-2xl border border-white/[0.05] min-w-[160px]"
-                    >
-                      <SimpleDropdown
-                        title="Resolution"
-                        options={currentResolutions}
-                        selected={selectedQuality}
-                        onSelect={(val) => setSelectedQuality(val)}
-                        onClose={() => setDropdownOpen(null)}
-                      />
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {dropdownOpen === "quality" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-[1.5rem] p-3 shadow-2xl border border-white/[0.05] min-w-[160px]"
+                      >
+                        <SimpleDropdown
+                          title="Resolution"
+                          options={currentResolutions}
+                          selected={selectedQuality}
+                          onSelect={(val) => setSelectedQuality(val)}
+                          onClose={() => setDropdownOpen(null)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

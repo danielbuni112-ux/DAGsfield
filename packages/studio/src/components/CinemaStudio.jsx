@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { generateImage } from "../muapi.js";
+import { motion, AnimatePresence } from "motion/react";
+import { generate } from "../studioClient.js";
+import { t2iModels } from "../models.js";
+import GeneratingState from "./GeneratingState.jsx";
+import ModelDropdown from "./ModelDropdown.jsx";
 
 // ─── Constants (inlined from promptUtils) ───────────────────────────────────
 
@@ -104,6 +108,34 @@ function buildNanoBananaPrompt(
   return parts.filter((p) => p && p.trim() !== "").join(", ");
 }
 
+function buildFluxCinemaPrompt(
+  basePrompt,
+  camera,
+  lens,
+  focalLength,
+  aperture,
+) {
+  const cameraDesc = CAMERA_MAP[camera] || camera;
+  const lensDesc = LENS_MAP[lens] || lens;
+  const perspective = FOCAL_PERSPECTIVE[focalLength] || "";
+  const depthEffect = APERTURE_EFFECT[aperture] || "";
+  const parts = [
+    `A cinematic shot on ${cameraDesc}`,
+    `using ${lensDesc} at ${focalLength}mm ${perspective ? `(${perspective})` : ""}`,
+    `aperture ${aperture}`,
+    depthEffect,
+    `Subject: ${basePrompt}`,
+    "cinematic lighting, film grain, highly detailed, professional cinematography, 8k resolution, masterpiece",
+  ];
+  return parts.filter((p) => p && p.trim() !== "").join(", ");
+}
+
+const RESOLUTION_MAP_FAL = {
+  "1K": "square_hd",
+  "2K": "landscape_4_3",
+  "4K": "landscape_16_9",
+};
+
 // ─── Dropdown ────────────────────────────────────────────────────────────────
 
 function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
@@ -140,9 +172,13 @@ function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
   }, [triggerRef, onClose]);
 
   return (
-    <div
+    <motion.div
       ref={menuRef}
-      className="custom-dropdown fixed bg-[#1a1a1a] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+      className="custom-dropdown fixed bg-[#1a1a1a] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px]"
       style={{ bottom: position.bottom, left: position.left }}
     >
       {items.map((item) => (
@@ -158,7 +194,7 @@ function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
           {item}
         </button>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -463,10 +499,12 @@ function CameraControlsOverlay({
 
 export default function CinemaStudio({
   apiKey,
+  falApiKey,
+  triggerOnboarding,
   onGenerationComplete,
   historyItems,
 }) {
-  const PERSIST_KEY = "hg_cinema_studio_persistent";
+  const PERSIST_KEY = "hg_cinema_studio_persistent_v2";
 
   // ── Settings state ──
   const [settings, setSettings] = useState({
@@ -478,6 +516,8 @@ export default function CinemaStudio({
     aperture: "f/1.4",
   });
   const [resolution, setResolution] = useState("2K");
+  const [provider, setProvider] = useState("muapi");
+  const [selectedModelId, setSelectedModelId] = useState("nano-banana-pro");
 
   // ── UI state ──
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
@@ -490,9 +530,10 @@ export default function CinemaStudio({
   const [internalHistory, setInternalHistory] = useState([]);
 
   // ── Dropdown state ──
-  const [openDropdown, setOpenDropdown] = useState(null); // 'ar' | 'res' | null
+  const [openDropdown, setOpenDropdown] = useState(null); // 'ar' | 'res' | 'model' | null
   const arBtnRef = useRef(null);
   const resBtnRef = useRef(null);
+  const modelBtnRef = useRef(null);
 
   // ── Textarea auto-grow ──
   const textareaRef = useRef(null);
@@ -506,6 +547,8 @@ export default function CinemaStudio({
         const data = JSON.parse(stored);
         if (data.settings) setSettings(data.settings);
         if (data.resolution) setResolution(data.resolution);
+        if (data.provider) setProvider(data.provider);
+        if (data.selectedModelId) setSelectedModelId(data.selectedModelId);
         if (data.internalHistory) setInternalHistory(data.internalHistory);
       }
     } catch (err) {
@@ -520,6 +563,8 @@ export default function CinemaStudio({
         const state = {
           settings,
           resolution,
+          provider,
+          selectedModelId,
           internalHistory,
         };
         localStorage.setItem(PERSIST_KEY, JSON.stringify(state));
@@ -528,7 +573,7 @@ export default function CinemaStudio({
       }
     }, 500); // 500ms debounce
     return () => clearTimeout(timer);
-  }, [settings, resolution, internalHistory]);
+  }, [settings, resolution, provider, selectedModelId, internalHistory]);
 
   // Derive effective history (prop wins over internal)
   const history = historyItems != null ? historyItems : internalHistory;
@@ -554,29 +599,60 @@ export default function CinemaStudio({
     const basePrompt = settings.prompt.trim();
     if (!basePrompt || isGenerating) return;
 
+    const isFal = provider === "fal";
+    const activeKey = isFal ? falApiKey : apiKey;
+
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (confirm(`You need a ${provider} API key to use this model. Would you like to add one now?`)) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(`Please provide a ${provider} API key in settings to use this model.`);
+      }
+      return;
+    }
+
     setIsGenerating(true);
 
-    const finalPrompt = buildNanoBananaPrompt(
-      basePrompt,
-      settings.camera,
-      settings.lens,
-      settings.focal,
-      settings.aperture,
-    );
+    const finalPrompt = isFal
+      ? buildFluxCinemaPrompt(
+          basePrompt,
+          settings.camera,
+          settings.lens,
+          settings.focal,
+          settings.aperture,
+        )
+      : buildNanoBananaPrompt(
+          basePrompt,
+          settings.camera,
+          settings.lens,
+          settings.focal,
+          settings.aperture,
+        );
 
     try {
-      const res = await generateImage(apiKey, {
-        model: "nano-banana-pro",
+      const genParams = {
+        provider,
+        model: selectedModelId,
         prompt: finalPrompt,
         aspect_ratio: settings.aspect_ratio,
-        resolution: resolution.toLowerCase(),
         negative_prompt: "blurry, low quality, distortion, bad composition",
-      });
+      };
+
+      if (isFal) {
+        genParams.image_size = RESOLUTION_MAP_FAL[resolution] || "landscape_4_3";
+      } else {
+        genParams.resolution = resolution.toLowerCase();
+      }
+
+      const res = await generate(genParams, { apiKey: activeKey });
 
       if (res && res.url) {
         const entry = {
           url: res.url,
           timestamp: Date.now(),
+          provider: res.provider,
           settings: {
             prompt: basePrompt,
             camera: settings.camera,
@@ -585,6 +661,7 @@ export default function CinemaStudio({
             aperture: settings.aperture,
             aspect_ratio: settings.aspect_ratio,
             resolution,
+            model: selectedModelId,
           },
         };
 
@@ -598,9 +675,10 @@ export default function CinemaStudio({
         if (onGenerationComplete) {
           onGenerationComplete({
             url: res.url,
-            model: "nano-banana-pro",
+            model: selectedModelId,
             prompt: basePrompt,
             type: "cinema",
+            provider: res.provider,
           });
         }
       } else {
@@ -615,10 +693,14 @@ export default function CinemaStudio({
   }, [
     settings,
     resolution,
+    provider,
+    selectedModelId,
     apiKey,
+    falApiKey,
     isGenerating,
     onGenerationComplete,
     historyItems,
+    triggerOnboarding,
   ]);
 
   // ── Regenerate ──
@@ -660,6 +742,8 @@ export default function CinemaStudio({
         prompt: entry.settings.prompt ?? prev.prompt,
       }));
       if (entry.settings.resolution) setResolution(entry.settings.resolution);
+      if (entry.provider) setProvider(entry.provider);
+      if (entry.settings.model) setSelectedModelId(entry.settings.model);
 
       // Sync textarea height
       if (textareaRef.current) {
@@ -688,19 +772,36 @@ export default function CinemaStudio({
       
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
-        {history.length > 0 ? (
+        {isGenerating ? (
+          <GeneratingState 
+            modelName={t2iModels.find(m => m.id === selectedModelId)?.name || "Cinema Studio"}
+            provider={provider}
+            statusText="Directing your shot..."
+          />
+        ) : history.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
             {history.map((entry, idx) => (
               <div
                 key={entry.timestamp ?? idx}
                 className="relative group rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-xl hover:border-[#d9ff00]/50 transition-all duration-300 flex flex-col cursor-pointer"
-                onClick={() => loadHistoryItem(entry, idx)}
+                onClick={() => setFullscreenUrl(entry.url)}
               >
                 <img
                   src={entry.url}
                   alt={`History item ${idx + 1}`}
                   className="w-full aspect-[4/3] object-cover bg-black/40"
                 />
+
+                {/* Provider Badge */}
+                <div className="absolute top-2 left-2 z-10">
+                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border backdrop-blur-md shadow-lg ${
+                    entry.provider === 'fal' 
+                      ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                      : 'bg-[#d9ff00]/20 text-[#d9ff00] border-[#d9ff00]/30'
+                  }`}>
+                    {entry.provider || 'muapi'}
+                  </span>
+                </div>
                 
                 {/* Overlay actions */}
                 <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -754,9 +855,14 @@ export default function CinemaStudio({
                     {entry.settings?.prompt || "No prompt"}
                   </p>
                   <div className="flex items-center justify-between mt-1 flex-wrap gap-1">
-                    <span className="text-[10px] font-bold text-[#d9ff00] px-2 py-0.5 bg-[#d9ff00]/10 rounded border border-[#d9ff00]/20">
-                      {entry.settings?.camera || "Standard"}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-[#d9ff00] px-2 py-0.5 bg-[#d9ff00]/10 rounded border border-[#d9ff00]/20 whitespace-nowrap">
+                        {entry.settings?.camera || "Standard"}
+                      </span>
+                      <span className="text-[9px] text-white/30 uppercase font-black tracking-tighter">
+                        via {entry.provider || 'muapi'}
+                      </span>
+                    </div>
                     <div className="flex gap-2">
                       <span className="text-[10px] text-white/40">{entry.settings?.lens || "35mm"}</span>
                       {entry.settings?.aspect_ratio && (
@@ -764,6 +870,16 @@ export default function CinemaStudio({
                       )}
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      loadHistoryItem(entry, idx);
+                    }}
+                    className="mt-1 self-start text-[10px] font-black uppercase tracking-[0.16em] text-white/60 hover:text-[#d9ff00] transition-colors px-2 py-1 rounded border border-white/10 hover:border-[#d9ff00]/30"
+                  >
+                    Restore settings
+                  </button>
                 </div>
               </div>
             ))}
@@ -810,6 +926,72 @@ export default function CinemaStudio({
             </div>
             <div className="flex justify-between gap-2">
               <div className="flex flex-wrap items-center gap-3">
+                {/* Provider Toggle */}
+                <div className="flex bg-white/5 rounded-md p-1 border border-white/5">
+                  <button
+                    onClick={() => {
+                      setProvider("muapi");
+                      setSelectedModelId("nano-banana-pro");
+                    }}
+                    className={`px-3 py-1 text-[10px] font-black uppercase rounded transition-all ${
+                      provider === "muapi"
+                        ? "bg-[#d9ff00] text-black"
+                        : "text-white/40 hover:text-white"
+                    }`}
+                  >
+                    muapi
+                  </button>
+                  <button
+                    onClick={() => {
+                      setProvider("fal");
+                      setSelectedModelId("fal-ai/nano-banana-2");
+                    }}
+                    className={`px-3 py-1 text-[10px] font-black uppercase rounded transition-all ${
+                      provider === "fal"
+                        ? "bg-purple-500 text-white"
+                        : "text-white/40 hover:text-white"
+                    }`}
+                  >
+                    fal.ai
+                  </button>
+                </div>
+
+                {/* Model Button */}
+                <div className="relative">
+                  <button
+                    ref={modelBtnRef}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-white/[0.03] hover:bg-white/10 text-xs font-bold text-white/40 hover:text-white transition-colors rounded-md border border-white/[0.03]"
+                    onClick={() =>
+                      setOpenDropdown((d) => (d === "model" ? null : "model"))
+                    }
+                  >
+                    <div className={`w-3 h-3 rounded-full ${provider === 'fal' ? 'bg-purple-500' : 'bg-[#d9ff00]'}`} />
+                    {t2iModels.find(m => m.id === selectedModelId)?.name || selectedModelId}
+                  </button>
+                  <AnimatePresence>
+                    {openDropdown === "model" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                        className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-lg p-3 shadow-2xl border border-white/[0.05] w-[calc(100vw-3rem)] max-w-xs"
+                      >
+                        <ModelDropdown
+                          models={t2iModels}
+                          selectedModel={selectedModelId}
+                          onSelect={(m) => {
+                            setSelectedModelId(m.id);
+                            setProvider(m.provider || 'muapi');
+                            setOpenDropdown(null);
+                          }}
+                          onClose={() => setOpenDropdown(null)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {/* Aspect Ratio Button */}
                 <div className="relative">
                   <button
@@ -824,17 +1006,19 @@ export default function CinemaStudio({
                     </svg>
                     {settings.aspect_ratio}
                   </button>
-                  {openDropdown === "ar" && (
-                    <Dropdown
-                      items={ASPECT_RATIOS}
-                      selected={settings.aspect_ratio}
-                      onSelect={(val) =>
-                        setSettings((prev) => ({ ...prev, aspect_ratio: val }))
-                      }
-                      triggerRef={arBtnRef}
-                      onClose={() => setOpenDropdown(null)}
-                    />
-                  )}
+                  <AnimatePresence>
+                    {openDropdown === "ar" && (
+                      <Dropdown
+                        items={ASPECT_RATIOS}
+                        selected={settings.aspect_ratio}
+                        onSelect={(val) =>
+                          setSettings((prev) => ({ ...prev, aspect_ratio: val }))
+                        }
+                        triggerRef={arBtnRef}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Resolution Button */}
@@ -851,15 +1035,17 @@ export default function CinemaStudio({
                     </svg>
                     {resolution}
                   </button>
-                  {openDropdown === "res" && (
-                    <Dropdown
-                      items={RESOLUTIONS}
-                      selected={resolution}
-                      onSelect={setResolution}
-                      triggerRef={resBtnRef}
-                      onClose={() => setOpenDropdown(null)}
-                    />
-                  )}
+                  <AnimatePresence>
+                    {openDropdown === "res" && (
+                      <Dropdown
+                        items={RESOLUTIONS}
+                        selected={resolution}
+                        onSelect={setResolution}
+                        triggerRef={resBtnRef}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
               <div className="flex items-center gap-3 h-full self-end mb-1">
@@ -906,6 +1092,27 @@ export default function CinemaStudio({
         settings={settings}
         onSettingsChange={setSettings}
       />
+
+      {fullscreenUrl && (
+        <div
+          className="fixed inset-0 z-[120] bg-black/90 backdrop-blur-md p-4 flex items-center justify-center"
+          onClick={() => setFullscreenUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setFullscreenUrl(null)}
+            className="absolute top-4 right-4 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-white/70 hover:text-[#d9ff00] transition-colors"
+          >
+            Close
+          </button>
+          <img
+            src={fullscreenUrl}
+            alt="Cinema fullscreen preview"
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { processLipSync, uploadFile } from "../muapi.js";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "motion/react";
+import { generate, uploadFile } from "../studioClient.js";
+import GeneratingState from "./GeneratingState.jsx";
+import ModelDropdown from "./ModelDropdown.jsx";
 import {
   lipsyncModels,
   imageLipSyncModels,
@@ -31,6 +35,9 @@ function MediaPickerButton({
   previewUrl,
   isVideo,
   apiKey,
+  falApiKey,
+  provider,
+  triggerOnboarding
 }) {
   const inputRef = useRef(null);
 
@@ -40,6 +47,19 @@ function MediaPickerButton({
       onClear();
       return;
     }
+
+    const activeKey = provider === 'fal' ? falApiKey : apiKey;
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (confirm(`You need a ${provider} API key to upload files for this model. Would you like to add one now?`)) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(`Please provide a ${provider} API key in settings to upload files.`);
+      }
+      return;
+    }
+
     inputRef.current?.click();
   };
 
@@ -165,8 +185,12 @@ function Dropdown({ isOpen, items, selectedId, onSelect, onClose, anchorRef }) {
   if (!isOpen) return null;
 
   return (
-    <div
+    <motion.div
       ref={dropRef}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
       style={{
         position: "fixed",
         zIndex: 100,
@@ -183,21 +207,68 @@ function Dropdown({ isOpen, items, selectedId, onSelect, onClose, anchorRef }) {
             onSelect(item);
             onClose();
           }}
-          className={`w-full text-left px-4 py-2 rounded text-sm transition-all hover:bg-white/10 ${
+          className={`w-full text-left p-3.5 rounded-lg transition-all hover:bg-white/5 border border-transparent hover:border-white/5 ${
             item.id === selectedId
-              ? "text-primary font-bold bg-primary/5"
-              : "text-white font-medium"
+              ? "bg-white/5 border-white/5"
+              : ""
           }`}
         >
-          <div>{item.name}</div>
-          {item.description && (
-            <div className="text-xs text-muted mt-0.5">
-              {item.description.slice(0, 60)}...
+          <div className="flex items-center gap-3.5">
+            {/* First letter circle icon - only if it's a model (has family or id) */}
+            {item.id && !item.name.includes('p') && (
+              <div
+                className={`w-10 h-10 shrink-0 ${
+                  item.family === "infinitetalk"
+                    ? "bg-blue-500/10 text-blue-400"
+                    : item.family === "lipsync"
+                      ? "bg-orange-500/10 text-orange-400"
+                      : "bg-primary/10 text-primary"
+                } border border-white/5 rounded-full flex items-center justify-center font-bold text-xs shadow-inner uppercase`}
+              >
+                {item.name.charAt(0)}
+              </div>
+            )}
+            
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-xs font-bold truncate ${item.id === selectedId ? 'text-primary' : 'text-white'}`}>
+                  {item.name}
+                </span>
+                {/* Provider Badge - only for models */}
+                {item.id && !item.name.includes('p') && (
+                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border shrink-0 ${
+                    item.provider === 'fal' 
+                      ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+                      : 'bg-[#d9ff00]/10 text-[#d9ff00] border-[#d9ff00]/20'
+                  }`}>
+                    {item.provider || 'muapi'}
+                  </span>
+                )}
+              </div>
+              {item.description && (
+                <div className="text-[10px] text-white/40 truncate">
+                  {item.description}
+                </div>
+              )}
             </div>
-          )}
+            
+            {item.id === selectedId && (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#d9ff00"
+                strokeWidth="4"
+                className="shrink-0"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
         </button>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -289,6 +360,8 @@ const VideoIcon = ({
 // ---------------------------------------------------------------------------
 export default function LipSyncStudio({
   apiKey,
+  falApiKey,
+  triggerOnboarding,
   onGenerationComplete,
   historyItems,
 }) {
@@ -305,6 +378,14 @@ export default function LipSyncStudio({
   const [selectedResolution, setSelectedResolution] = useState(
     firstModel?.inputs?.resolution?.default ?? "480p",
   );
+
+  // ── Helpers ──
+  const getActiveKeyAndProvider = () => {
+    const model = lipsyncModels.find((m) => m.id === selectedModelId);
+    const provider = model?.provider || 'muapi';
+    const activeKey = provider === 'fal' ? falApiKey : apiKey;
+    return { activeKey, provider };
+  };
 
   // ── Upload state ────────────────────────────────────────────────────────
   const [imageState, setImageState] = useState(UPLOAD_STATE.IDLE);
@@ -329,6 +410,7 @@ export default function LipSyncStudio({
 
   // ── Generation / UI state ───────────────────────────────────────────────
   const [isGenerating, setIsGenerating] = useState(false);
+  const [statusText, setStatusText] = useState("Processing...");
   const [generateError, setGenerateError] = useState(null);
   const [fullscreenUrl, setFullscreenUrl] = useState(null);
   const [view, setView] = useState("input"); // 'input' | 'result'
@@ -342,12 +424,31 @@ export default function LipSyncStudio({
 
   // ── Dropdown state ──────────────────────────────────────────────────────
   const [openDropdown, setOpenDropdown] = useState(null); // 'model' | 'resolution' | null
+  const dropdownRef = useRef(null);
   const modelBtnRef = useRef(null);
   const resolutionBtnRef = useRef(null);
 
   // ── Video ref for result ────────────────────────────────────────────────
   const resultVideoRef = useRef(null);
   const hasRestored = useRef(false);
+
+  useEffect(() => {
+    if (openDropdown !== "model") return;
+
+    const handler = (e) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target) &&
+        modelBtnRef.current &&
+        !modelBtnRef.current.contains(e.target)
+      ) {
+        setOpenDropdown(null);
+      }
+    };
+
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, [openDropdown]);
 
   // ── Persistence: Load ────────────────────────────────────────────────────
   useEffect(() => {
@@ -444,12 +545,23 @@ export default function LipSyncStudio({
         alert("Image exceeds 10MB limit.");
         return;
       }
+
+      const { activeKey, provider } = getActiveKeyAndProvider();
+      if (!activeKey) return; // Handled by picker click
+
       setImageState(UPLOAD_STATE.UPLOADING);
       setImageProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => {
-          setImageProgress(pct);
-        });
+        let url;
+        if (provider === "fal") {
+          url = await uploadFalFile(activeKey, file, (pct) => {
+            setImageProgress(pct);
+          });
+        } else {
+          url = await uploadFile(provider, activeKey, file, (pct) => {
+            setImageProgress(pct);
+          });
+        }
         setImageUrl(url);
         setImageName(file.name);
         setImageState(UPLOAD_STATE.READY);
@@ -460,7 +572,7 @@ export default function LipSyncStudio({
         setImageProgress(0);
       }
     },
-    [apiKey],
+    [apiKey, falApiKey, selectedModelId],
   );
 
   const handleVideoPick = useCallback(
@@ -469,12 +581,23 @@ export default function LipSyncStudio({
         alert("Video exceeds 50MB limit.");
         return;
       }
+
+      const { activeKey, provider } = getActiveKeyAndProvider();
+      if (!activeKey) return;
+
       setVideoState(UPLOAD_STATE.UPLOADING);
       setVideoProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => {
-          setVideoProgress(pct);
-        });
+        let url;
+        if (provider === "fal") {
+          url = await uploadFalFile(activeKey, file, (pct) => {
+            setVideoProgress(pct);
+          });
+        } else {
+          url = await uploadFile(provider, activeKey, file, (pct) => {
+            setVideoProgress(pct);
+          });
+        }
         setVideoUrl(url);
         setVideoName(file.name);
         setVideoState(UPLOAD_STATE.READY);
@@ -485,7 +608,7 @@ export default function LipSyncStudio({
         setVideoProgress(0);
       }
     },
-    [apiKey],
+    [apiKey, falApiKey, selectedModelId],
   );
 
   const handleAudioPick = useCallback(
@@ -494,12 +617,23 @@ export default function LipSyncStudio({
         alert("Audio file exceeds 10MB limit.");
         return;
       }
+
+      const { activeKey, provider } = getActiveKeyAndProvider();
+      if (!activeKey) return;
+
       setAudioState(UPLOAD_STATE.UPLOADING);
       setAudioProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => {
-          setAudioProgress(pct);
-        });
+        let url;
+        if (provider === "fal") {
+          url = await uploadFalFile(activeKey, file, (pct) => {
+            setAudioProgress(pct);
+          });
+        } else {
+          url = await uploadFile(provider, activeKey, file, (pct) => {
+            setAudioProgress(pct);
+          });
+        }
         setAudioUrl(url);
         setAudioName(file.name);
         setAudioState(UPLOAD_STATE.READY);
@@ -510,7 +644,7 @@ export default function LipSyncStudio({
         setAudioProgress(0);
       }
     },
-    [apiKey],
+    [apiKey, falApiKey, selectedModelId],
   );
 
   // ── Mode toggle ─────────────────────────────────────────────────────────
@@ -532,6 +666,11 @@ export default function LipSyncStudio({
 
   // ── Model selection ─────────────────────────────────────────────────────
   const handleModelSelect = (model) => {
+    // Proactive onboarding: check if provider key exists
+    if (model.provider === 'fal' && !falApiKey || (model.provider === 'muapi' || !model.provider) && !apiKey) {
+      triggerOnboarding?.();
+    }
+
     setSelectedModelId(model.id);
     const resolutions = getResolutionsForLipSyncModel(model.id);
     if (resolutions.length > 0) {
@@ -565,6 +704,25 @@ export default function LipSyncStudio({
 
   // ── Generation ──────────────────────────────────────────────────────────
   const handleGenerate = async () => {
+    const { activeKey, provider } = getActiveKeyAndProvider();
+
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (
+          confirm(
+            `You need a ${provider} API key to use this model. Would you like to add one now?`,
+          )
+        ) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(
+          `Please provide a ${provider} API key in settings to use this model.`,
+        );
+      }
+      return;
+    }
+
     if (!audioUrl) {
       alert("Please upload an audio file first.");
       return;
@@ -580,19 +738,24 @@ export default function LipSyncStudio({
 
     setIsGenerating(true);
     setGenerateError(null);
+    setStatusText("Initializing lip sync...");
 
     try {
-      const lipsyncParams = {
+      const genParams = {
         model: selectedModelId,
+        provider,
         audio_url: audioUrl,
+        onStatusUpdate: (status) => {
+          if (status.message) setStatusText(status.message);
+        }
       };
-      if (inputMode === "image") lipsyncParams.image_url = imageUrl;
-      else lipsyncParams.video_url = videoUrl;
-      if (prompt && selectedModel?.hasPrompt) lipsyncParams.prompt = prompt;
-      if (showResolution) lipsyncParams.resolution = selectedResolution;
-      if (selectedModel?.hasSeed) lipsyncParams.seed = -1;
+      if (inputMode === "image") genParams.image_url = imageUrl;
+      else genParams.video_url = videoUrl;
+      if (prompt && selectedModel?.hasPrompt) genParams.prompt = prompt;
+      if (showResolution) genParams.resolution = selectedResolution;
+      if (selectedModel?.hasSeed) genParams.seed = -1;
 
-      const res = await processLipSync(apiKey, lipsyncParams);
+      const res = await generate(genParams, { apiKey: activeKey });
 
       if (!res?.url) throw new Error("No video URL returned by API");
 
@@ -602,6 +765,7 @@ export default function LipSyncStudio({
         url: res.url,
         prompt,
         model: selectedModelId,
+        provider: res.provider,
         timestamp: new Date().toISOString(),
       };
 
@@ -610,6 +774,7 @@ export default function LipSyncStudio({
       setActiveResultUrl(res.url);
       setActiveHistoryIdx(0);
       setView("result");
+      toast.success("Lip sync complete!");
 
       if (onGenerationComplete) {
         onGenerationComplete({
@@ -617,14 +782,17 @@ export default function LipSyncStudio({
           model: selectedModelId,
           prompt,
           type: "lipsync",
+          provider: res.provider,
         });
       }
     } catch (e) {
       console.error("[LipSyncStudio]", e);
       setGenerateError(e.message?.slice(0, 80) ?? "Unknown error");
+      toast.error(e.message || "Lip sync failed");
       setTimeout(() => setGenerateError(null), 4000);
     } finally {
       setIsGenerating(false);
+      setStatusText("Processing...");
     }
   };
 
@@ -678,7 +846,13 @@ export default function LipSyncStudio({
       
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
-        {history.length > 0 ? (
+        {isGenerating ? (
+          <GeneratingState
+            modelName={selectedModel?.name}
+            provider={selectedModel?.provider || 'muapi'}
+            statusText={statusText}
+          />
+        ) : history.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
             {history.map((entry, idx) => (
               <div
@@ -698,9 +872,21 @@ export default function LipSyncStudio({
                     e.target.pause();
                     e.target.currentTime = 0;
                   }}
-                />
-                
-                {/* Overlay actions */}
+                  />
+
+                  {/* Provider Badge */}
+                  <div className="absolute top-2 left-2 z-10">
+                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border backdrop-blur-md shadow-lg ${
+                    entry.provider === 'fal' 
+                      ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                      : 'bg-[#d9ff00]/20 text-[#d9ff00] border-[#d9ff00]/30'
+                  }`}>
+                    {entry.provider || 'muapi'}
+                  </span>
+                  </div>
+
+                  {/* Overlay actions */}
+
                 <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     type="button"
@@ -736,9 +922,14 @@ export default function LipSyncStudio({
                 {/* Details */}
                 <div className="p-3 bg-black/80 backdrop-blur-sm border-t border-white/5 flex-1 flex flex-col justify-between gap-2">
                   <div className="flex items-center justify-between flex-wrap gap-1">
-                    <span className="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded border border-primary/20 whitespace-nowrap">
-                      {entry.model?.name || entry.model || "Lip Sync"}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded border border-primary/20 whitespace-nowrap">
+                        {entry.model?.name || entry.model || "Lip Sync"}
+                      </span>
+                      <span className="text-[9px] text-white/30 uppercase font-black tracking-tighter">
+                        via {entry.provider || 'muapi'}
+                      </span>
+                    </div>
                     {entry.resolution && (
                       <span className="text-[10px] text-white/40">{entry.resolution}</span>
                     )}
@@ -838,6 +1029,12 @@ export default function LipSyncStudio({
                   previewUrl={imageUrl}
                   isVideo={false}
                   apiKey={apiKey}
+                  falApiKey={falApiKey}
+                  provider={
+                    lipsyncModels.find((m) => m.id === selectedModelId)
+                      ?.provider || "muapi"
+                  }
+                  triggerOnboarding={triggerOnboarding}
                 />
               )}
 
@@ -861,6 +1058,12 @@ export default function LipSyncStudio({
                   previewUrl={videoUrl}
                   isVideo={true}
                   apiKey={apiKey}
+                  falApiKey={falApiKey}
+                  provider={
+                    lipsyncModels.find((m) => m.id === selectedModelId)
+                      ?.provider || "muapi"
+                  }
+                  triggerOnboarding={triggerOnboarding}
                 />
               )}
 
@@ -883,6 +1086,12 @@ export default function LipSyncStudio({
                 previewUrl={null}
                 isVideo={false}
                 apiKey={apiKey}
+                falApiKey={falApiKey}
+                provider={
+                  lipsyncModels.find((m) => m.id === selectedModelId)
+                    ?.provider || "muapi"
+                }
+                triggerOnboarding={triggerOnboarding}
               />
             </div>
 
@@ -936,14 +1145,26 @@ export default function LipSyncStudio({
                     <path d="M6 9l6 6 6-6" />
                   </svg>
                 </button>
-                <Dropdown
-                  isOpen={openDropdown === "model"}
-                  items={modelDropdownItems}
-                  selectedId={selectedModelId}
-                  onSelect={handleModelSelect}
-                  onClose={() => setOpenDropdown(null)}
-                  anchorRef={modelBtnRef}
-                />
+                <AnimatePresence>
+                  {openDropdown === "model" && (
+                    <motion.div
+                      ref={dropdownRef}
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-[1.5rem] p-3 shadow-2xl border border-white/[0.05] w-[calc(100vw-3rem)] max-w-xs"
+                    >
+                      <ModelDropdown
+                        models={modelDropdownItems}
+                        selectedModel={selectedModelId}
+                        onSelect={handleModelSelect}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Resolution selector */}
@@ -964,14 +1185,18 @@ export default function LipSyncStudio({
                       {selectedResolution}
                     </span>
                   </button>
-                  <Dropdown
-                    isOpen={openDropdown === "resolution"}
-                    items={resolutionDropdownItems}
-                    selectedId={selectedResolution}
-                    onSelect={(item) => setSelectedResolution(item.id)}
-                    onClose={() => setOpenDropdown(null)}
-                    anchorRef={resolutionBtnRef}
-                  />
+                  <AnimatePresence>
+                    {openDropdown === "resolution" && (
+                      <Dropdown
+                        isOpen={true}
+                        items={resolutionDropdownItems}
+                        selectedId={selectedResolution}
+                        onSelect={(item) => setSelectedResolution(item.id)}
+                        onClose={() => setOpenDropdown(null)}
+                        anchorRef={resolutionBtnRef}
+                      />
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

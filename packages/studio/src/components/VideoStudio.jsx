@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { generateVideo, generateI2V, uploadFile } from "../muapi.js";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "motion/react";
+import { generate, uploadFile } from "../studioClient.js";
+import GeneratingState from "./GeneratingState.jsx";
+import ModelDropdown from "./ModelDropdown.jsx";
 import {
   t2vModels,
   i2vModels,
@@ -101,102 +105,6 @@ function DropdownItem({ label, selected, onClick }) {
   );
 }
 
-function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
-  const [search, setSearch] = useState("");
-
-  const generationModels = imageMode ? i2vModels : t2vModels;
-
-  const lf = search.toLowerCase();
-  const filteredMain = generationModels.filter(
-    (m) => m.name.toLowerCase().includes(lf) || m.id.toLowerCase().includes(lf),
-  );
-  const filteredV2V = v2vModels.filter(
-    (m) => m.name.toLowerCase().includes(lf) || m.id.toLowerCase().includes(lf),
-  );
-
-  const getIconColor = (m, isV2V) => {
-    if (isV2V) return "bg-orange-500/10 text-orange-400";
-    if (m.id.includes("kling")) return "bg-blue-500/10 text-blue-400";
-    if (m.id.includes("veo")) return "bg-purple-500/10 text-purple-400";
-    if (m.id.includes("sora")) return "bg-rose-500/10 text-rose-400";
-    return "bg-primary/10 text-primary";
-  };
-
-  const renderItem = (m, isV2V = false) => (
-    <div
-      key={m.id}
-      className={`flex items-center justify-between p-3.5 hover:bg-white/5 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-white/5 ${selectedModel === m.id ? "bg-white/5 border-white/5" : ""}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(m, isV2V);
-        onClose();
-      }}
-    >
-      <div className="flex items-center gap-3.5">
-        <div
-          className={`w-10 h-10 ${getIconColor(m, isV2V)} border border-white/5 rounded-xl flex items-center justify-center font-black text-sm shadow-inner uppercase`}
-        >
-          {m.name.charAt(0)}
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-bold text-white tracking-tight">
-            {m.name}
-          </span>
-          {isV2V && (
-            <span className="text-[9px] text-orange-400/70">
-              Upload a video to use
-            </span>
-          )}
-        </div>
-      </div>
-      {selectedModel === m.id && <CheckSvg />}
-    </div>
-  );
-
-  return (
-    <div className="flex flex-col h-full max-h-[70vh]">
-      <div className="px-2 pb-3 mb-2 border-b border-white/5 shrink-0">
-        <div className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-2.5 border border-white/5 focus-within:border-primary/50 transition-colors">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            className="text-muted"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search models..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-transparent border-none text-xs text-white focus:ring-0 w-full p-0 outline-none"
-          />
-        </div>
-      </div>
-      <div className="text-xs font-bold text-secondary px-3 py-2 shrink-0">
-        Video models
-      </div>
-      <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
-        {filteredMain.map((m) => renderItem(m, false))}
-        {filteredV2V.length > 0 && (
-          <>
-            <div className="text-xs font-bold text-orange-400/70 px-3 py-2 mt-1 border-t border-white/5">
-              Video Tools
-            </div>
-            {filteredV2V.map((m) => renderItem(m, true))}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ── Control button ────────────────────────────────────────────────────────────
 
 function ControlBtn({ icon, label, onClick, style }) {
@@ -233,6 +141,8 @@ function ControlBtn({ icon, label, onClick, style }) {
 
 export default function VideoStudio({
   apiKey,
+  falApiKey,
+  triggerOnboarding,
   onGenerationComplete,
   historyItems,
 }) {
@@ -280,6 +190,7 @@ export default function VideoStudio({
 
   // ── generation / canvas ──
   const [generating, setGenerating] = useState(false);
+  const [statusText, setStatusText] = useState("Processing...");
   const [generateError, setGenerateError] = useState(null);
   const [fullscreenUrl, setFullscreenUrl] = useState(null);
   const [canvasUrl, setCanvasUrl] = useState(null);
@@ -316,6 +227,14 @@ export default function VideoStudio({
     return imageMode ? i2vModels : t2vModels;
   }, [imageMode, v2vMode]);
 
+  const getCurrentModel = useCallback(
+    () => getCurrentModels().find((m) => m.id === selectedModel),
+    [getCurrentModels, selectedModel],
+  );
+
+  const currentModelObj = getCurrentModel();
+  const isExtendMode = currentModelObj?.requiresRequestId;
+
   const getCurrentAspectRatios = useCallback(
     (id) =>
       imageMode
@@ -336,11 +255,6 @@ export default function VideoStudio({
         ? getResolutionsForI2VModel(id)
         : getResolutionsForVideoModel(id),
     [imageMode],
-  );
-
-  const getCurrentModel = useCallback(
-    () => getCurrentModels().find((m) => m.id === selectedModel),
-    [getCurrentModels, selectedModel],
   );
 
   // ── update controls when model/mode changes ──────────────────────────────
@@ -526,10 +440,33 @@ export default function VideoStudio({
     setImageUploading(true);
     setImageProgress(0);
 
+    const currentModel = getCurrentModel();
+    const provider = currentModel?.provider || 'muapi';
+    const activeKey = provider === 'fal' ? falApiKey : apiKey;
+
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (confirm(`You need a ${provider} API key to upload images for this model. Would you like to add one now?`)) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(`Please provide a ${provider} API key in settings to upload images.`);
+      }
+      setImageUploading(false);
+      return;
+    }
+
     try {
-      const url = await uploadFile(apiKey, file, (pct) => {
-        setImageProgress(pct);
-      });
+      let url;
+      if (provider === 'fal') {
+        url = await uploadFalFile(activeKey, file, (pct) => {
+          setImageProgress(pct);
+        });
+      } else {
+        url = await uploadFile(provider, activeKey, file, (pct) => {
+          setImageProgress(pct);
+        });
+      }
       setUploadedImageUrl(url);
 
       // Clear v2v if active
@@ -575,10 +512,34 @@ export default function VideoStudio({
     }
     setVideoUploading(true);
     setVideoProgress(0);
+
+    const currentModel = getCurrentModel();
+    const provider = currentModel?.provider || 'muapi';
+    const activeKey = provider === 'fal' ? falApiKey : apiKey;
+
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (confirm(`You need a ${provider} API key to upload videos for this model. Would you like to add one now?`)) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(`Please provide a ${provider} API key in settings to upload videos.`);
+      }
+      setVideoUploading(false);
+      return;
+    }
+
     try {
-      const url = await uploadFile(apiKey, file, (pct) => {
-        setVideoProgress(pct);
-      });
+      let url;
+      if (provider === 'fal') {
+        url = await uploadFalFile(activeKey, file, (pct) => {
+          setVideoProgress(pct);
+        });
+      } else {
+        url = await uploadFile(provider, activeKey, file, (pct) => {
+          setVideoProgress(pct);
+        });
+      }
       setUploadedVideoUrl(url);
       setUploadedVideoName(file.name);
 
@@ -617,12 +578,18 @@ export default function VideoStudio({
 
   // ── model selection from dropdown ─────────────────────────────────────────
   const handleModelSelect = useCallback(
-    (m, isV2V) => {
+    (m) => {
+      // Proactive onboarding: check if provider key exists
+      if (m.provider === 'fal' && !falApiKey || (m.provider === 'muapi' || !m.provider) && !apiKey) {
+        triggerOnboarding?.();
+      }
+
+      const isV2V = v2vModels.some(vm => vm.id === m.id);
+
       if (isV2V) {
         setV2vMode(true);
         setImageMode(false);
         setUploadedImageUrl(null);
-        setUploadedImagePreview(null);
         setSelectedModel(m.id);
         setSelectedModelName(m.name);
         applyControlsForModel(m.id, false, true);
@@ -640,7 +607,7 @@ export default function VideoStudio({
         applyControlsForModel(m.id, imageMode, false);
       }
     },
-    [v2vMode, imageMode, applyControlsForModel],
+    [v2vMode, imageMode, applyControlsForModel, apiKey, falApiKey, triggerOnboarding],
   );
 
   // ── add to local history ──────────────────────────────────────────────────
@@ -659,6 +626,20 @@ export default function VideoStudio({
   // ── generate ──────────────────────────────────────────────────────────────
   const handleGenerate = useCallback(async () => {
     const currentModel = getCurrentModel();
+    const provider = currentModel?.provider || 'muapi';
+    const activeKey = provider === 'fal' ? falApiKey : apiKey;
+
+    if (!activeKey) {
+      if (triggerOnboarding) {
+        if (confirm(`You need a ${provider} API key to use this model. Would you like to add one now?`)) {
+          triggerOnboarding();
+        }
+      } else {
+        alert(`Please provide a ${provider} API key in settings to use this model.`);
+      }
+      return;
+    }
+
     const isExtendMode = currentModel?.requiresRequestId;
     const trimmedPrompt = prompt.trim();
 
@@ -688,140 +669,89 @@ export default function VideoStudio({
 
     setGenerating(true);
     setGenerateError(null);
-
-    let hadError = false;
+    setStatusText("Initializing generation...");
 
     try {
-      let res;
+      const genParams = {
+        model: selectedModel,
+        provider,
+        onStatusUpdate: (status) => {
+          if (status.message) setStatusText(status.message);
+        }
+      };
 
       if (v2vMode) {
-        // V2V: use generateVideo with video_url (the v2v models use the video endpoint)
-        res = await generateVideo(apiKey, {
-          model: selectedModel,
-          video_url: uploadedVideoUrl,
-        });
-        if (!res?.url) throw new Error("No video URL returned by API");
+        genParams.video_url = uploadedVideoUrl;
+      } else if (imageMode) {
+        genParams.image_url = uploadedImageUrl;
+        if (prompt.trim()) genParams.prompt = prompt.trim();
+        genParams.aspect_ratio = selectedAr;
+        if (showDuration) genParams.duration = selectedDuration;
+        if (showResolution) genParams.resolution = selectedResolution;
+        if (selectedQuality) genParams.quality = selectedQuality;
+        if (selectedMode) genParams.mode = selectedMode;
+      } else {
+        if (prompt.trim()) genParams.prompt = prompt.trim();
+        if (isExtendMode) {
+          genParams.request_id = lastGenerationId;
+        } else {
+          genParams.aspect_ratio = selectedAr;
+        }
+        if (showDuration) genParams.duration = selectedDuration;
+        if (showResolution) genParams.resolution = selectedResolution;
+        if (selectedQuality) genParams.quality = selectedQuality;
+        if (selectedMode) genParams.mode = selectedMode;
+      }
 
-        const genId = res.id || Date.now().toString();
+      const res = await generate(genParams, { apiKey: activeKey });
+
+      if (!res?.url) throw new Error("No video URL returned by API");
+
+      const genId = res.id || Date.now().toString();
+      if (
+        selectedModel === "seedance-v2.0-t2v" ||
+        selectedModel === "seedance-v2.0-i2v"
+      ) {
+        setLastGenerationId(genId);
+        setLastGenerationModel(selectedModel);
+      } else {
         setLastGenerationId(null);
         setLastGenerationModel(null);
-        const entry = {
-          id: genId,
-          url: res.url,
-          prompt: "",
-          model: selectedModel,
-          timestamp: new Date().toISOString(),
-        };
-        addToLocalHistory(entry);
-        showVideoInCanvas(res.url, selectedModel);
-        if (onGenerationComplete)
-          onGenerationComplete({
-            url: res.url,
-            model: selectedModel,
-            prompt: "",
-            type: "video",
-          });
-      } else if (imageMode) {
-        const i2vParams = { model: selectedModel, image_url: uploadedImageUrl };
-        if (trimmedPrompt) i2vParams.prompt = trimmedPrompt;
-        i2vParams.aspect_ratio = selectedAr;
-        const durations = getDurationsForI2VModel(selectedModel);
-        if (durations.length > 0) i2vParams.duration = selectedDuration;
-        const resolutions = getResolutionsForI2VModel(selectedModel);
-        if (resolutions.length > 0) i2vParams.resolution = selectedResolution;
-        if (selectedQuality) i2vParams.quality = selectedQuality;
-        if (selectedMode) i2vParams.mode = selectedMode;
-
-        res = await generateI2V(apiKey, i2vParams);
-        if (!res?.url) throw new Error("No video URL returned by API");
-
-        const genId = res.id || Date.now().toString();
-        if (selectedModel === "seedance-v2.0-i2v") {
-          setLastGenerationId(genId);
-          setLastGenerationModel(selectedModel);
-        } else {
-          setLastGenerationId(null);
-          setLastGenerationModel(null);
-        }
-        const entry = {
-          id: genId,
-          url: res.url,
-          prompt: trimmedPrompt,
-          model: selectedModel,
-          aspect_ratio: selectedAr,
-          duration: selectedDuration,
-          timestamp: new Date().toISOString(),
-        };
-        addToLocalHistory(entry);
-        showVideoInCanvas(res.url, selectedModel);
-        if (onGenerationComplete)
-          onGenerationComplete({
-            url: res.url,
-            model: selectedModel,
-            prompt: trimmedPrompt,
-            type: "video",
-          });
-      } else {
-        // T2V (including extend mode)
-        const params = { model: selectedModel };
-        if (trimmedPrompt) params.prompt = trimmedPrompt;
-
-        if (isExtendMode) {
-          params.request_id = lastGenerationId;
-        } else {
-          params.aspect_ratio = selectedAr;
-        }
-
-        const durations = getDurationsForModel(selectedModel);
-        if (durations.length > 0) params.duration = selectedDuration;
-        const resolutions = getResolutionsForVideoModel(selectedModel);
-        if (resolutions.length > 0) params.resolution = selectedResolution;
-        if (selectedQuality) params.quality = selectedQuality;
-        if (selectedMode) params.mode = selectedMode;
-
-        res = await generateVideo(apiKey, params);
-        if (!res?.url) throw new Error("No video URL returned by API");
-
-        const genId = res.id || Date.now().toString();
-        if (
-          selectedModel === "seedance-v2.0-t2v" ||
-          selectedModel === "seedance-v2.0-i2v"
-        ) {
-          setLastGenerationId(genId);
-          setLastGenerationModel(selectedModel);
-        } else {
-          setLastGenerationId(null);
-          setLastGenerationModel(null);
-        }
-        const entry = {
-          id: genId,
-          url: res.url,
-          prompt: trimmedPrompt,
-          model: selectedModel,
-          aspect_ratio: selectedAr,
-          duration: selectedDuration,
-          timestamp: new Date().toISOString(),
-        };
-        addToLocalHistory(entry);
-        showVideoInCanvas(res.url, selectedModel);
-        if (onGenerationComplete)
-          onGenerationComplete({
-            url: res.url,
-            model: selectedModel,
-            prompt: trimmedPrompt,
-            type: "video",
-          });
       }
+      const entry = {
+        id: genId,
+        url: res.url,
+        prompt: v2vMode ? "" : prompt.trim(),
+        model: selectedModel,
+        aspect_ratio: selectedAr,
+        duration: selectedDuration,
+        resolution: selectedResolution,
+        provider: res.provider,
+        timestamp: new Date().toISOString(),
+      };
+      addToLocalHistory(entry);
+      showVideoInCanvas(res.url, selectedModel);
+      toast.success("Video generated!");
+      if (onGenerationComplete)
+        onGenerationComplete({
+          url: res.url,
+          model: selectedModel,
+          prompt: v2vMode ? "" : prompt.trim(),
+          type: "video",
+          provider: res.provider,
+        });
     } catch (e) {
-      hadError = true;
       console.error("[VideoStudio]", e);
       setGenerateError(e.message?.slice(0, 80) || "Generation failed");
+      toast.error(e.message || "Generation failed");
       setTimeout(() => setGenerateError(null), 4000);
     } finally {
       setGenerating(false);
+      setStatusText("Processing...");
     }
   }, [
     apiKey,
+    falApiKey,
     prompt,
     v2vMode,
     imageMode,
@@ -834,10 +764,14 @@ export default function VideoStudio({
     uploadedImageUrl,
     uploadedVideoUrl,
     lastGenerationId,
+    isExtendMode,
+    showDuration,
+    showResolution,
     getCurrentModel,
     addToLocalHistory,
     showVideoInCanvas,
     onGenerationComplete,
+    triggerOnboarding
   ]);
 
   // ── reset to prompt bar ───────────────────────────────────────────────────
@@ -849,7 +783,6 @@ export default function VideoStudio({
     resetToPromptBar();
     setPrompt("");
     setUploadedImageUrl(null);
-    setUploadedImagePreview(null);
     setImageMode(false);
     setUploadedVideoUrl(null);
     setUploadedVideoName(null);
@@ -867,7 +800,6 @@ export default function VideoStudio({
     resetToPromptBar();
     setPrompt("");
     setUploadedImageUrl(null);
-    setUploadedImagePreview(null);
     setImageMode(false);
     setSelectedModel("seedance-v2.0-extend");
     setSelectedModelName("Seedance 2.0 Extend");
@@ -879,8 +811,6 @@ export default function VideoStudio({
   // ── derived UI values ────────────────────────────────────────────────────
   const isSeedance2Canvas =
     canvasModel === "seedance-v2.0-t2v" || canvasModel === "seedance-v2.0-i2v";
-  const currentModelObj = getCurrentModel();
-  const isExtendMode = currentModelObj?.requiresRequestId;
 
   const promptPlaceholder = v2vMode
     ? "Video ready — click Generate to remove watermark"
@@ -903,7 +833,13 @@ export default function VideoStudio({
     >
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
-        {history.length > 0 ? (
+        {generating ? (
+          <GeneratingState
+            modelName={selectedModelName}
+            provider={getCurrentModel()?.provider || 'muapi'}
+            statusText={statusText}
+          />
+        ) : history.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
             {history.map((entry, idx) => {
               const isSeedance2 = entry.model === "seedance-v2.0-t2v" || entry.model === "seedance-v2.0-i2v";
@@ -926,6 +862,17 @@ export default function VideoStudio({
                       e.target.currentTime = 0;
                     }}
                   />
+
+                  {/* Provider Badge */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border backdrop-blur-md shadow-lg ${
+                      entry.provider === 'fal' 
+                        ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                        : 'bg-[#d9ff00]/20 text-[#d9ff00] border-[#d9ff00]/30'
+                    }`}>
+                      {entry.provider || 'muapi'}
+                    </span>
+                  </div>
                   
                   {/* Overlay actions */}
                   <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -982,9 +929,14 @@ export default function VideoStudio({
                       {entry.prompt || "No prompt provided"}
                     </p>
                     <div className="flex items-center justify-between mt-1 flex-wrap gap-1">
-                      <span className="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded border border-primary/20 whitespace-nowrap">
-                        {entry.model?.replace("-", " ")}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded border border-primary/20 whitespace-nowrap">
+                          {entry.model?.replace("-", " ")}
+                        </span>
+                        <span className="text-[9px] text-white/30 uppercase font-black tracking-tighter">
+                          via {entry.provider || 'muapi'}
+                        </span>
+                      </div>
                       <div className="flex gap-2">
                         {entry.resolution && (
                           <span className="text-[10px] text-white/40">{entry.resolution}</span>
@@ -1196,20 +1148,26 @@ export default function VideoStudio({
                     <path d="M6 9l6 6 6-6" />
                   </svg>
                 </button>
-                {openDropdown === "model" && (
-                  <div
-                    ref={dropdownRef}
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-[1.5rem] p-3 shadow-2xl border border-white/[0.05] w-[calc(100vw-3rem)] max-w-xs"
-                  >
-                    <ModelDropdown
-                      imageMode={imageMode}
-                      selectedModel={selectedModel}
-                      onSelect={handleModelSelect}
-                      onClose={() => setOpenDropdown(null)}
-                    />
-                  </div>
-                )}
+                <AnimatePresence>
+                  {openDropdown === "model" && (
+                    <motion.div
+                      ref={dropdownRef}
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-[1.5rem] p-3 shadow-2xl border border-white/[0.05] w-[calc(100vw-3rem)] max-w-xs"
+                    >
+                      <ModelDropdown
+                        models={[...getCurrentModels(), ...v2vModels.filter(vm => !getCurrentModels().some(cm => cm.id === vm.id))]}
+                        selectedModel={selectedModel}
+                        onSelect={handleModelSelect}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Aspect ratio btn */}
@@ -1242,35 +1200,41 @@ export default function VideoStudio({
                       {selectedAr}
                     </span>
                   </button>
-                  {openDropdown === "ar" && (
-                    <div
-                      ref={dropdownRef}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-lg p-3 shadow-2xl border border-white/[0.05] max-h-80 overflow-y-auto custom-scrollbar min-w-[160px]"
-                    >
-                      <div className="text-xs font-bold text-white/20 border-b border-white/[0.03] mb-2">
-                        Aspect Ratio
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {getCurrentAspectRatios(selectedModel).map((r) => (
-                          <div
-                            key={r}
-                            className="flex items-center justify-between p-3 hover:bg-white/5 rounded cursor-pointer transition-all group/opt"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedAr(r);
-                              setOpenDropdown(null);
-                            }}
-                          >
-                            <span className="text-[11px] font-semibold text-white/70 group-hover/opt:text-white transition-opacity">
-                              {r}
-                            </span>
-                            {selectedAr === r && <CheckSvg />}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {openDropdown === "ar" && (
+                      <motion.div
+                        ref={dropdownRef}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-lg p-3 shadow-2xl border border-white/[0.05] max-h-80 overflow-y-auto custom-scrollbar min-w-[160px]"
+                      >
+                        <div className="text-xs font-bold text-white/20 border-b border-white/[0.03] mb-2">
+                          Aspect Ratio
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {getCurrentAspectRatios(selectedModel).map((r) => (
+                            <div
+                              key={r}
+                              className="flex items-center justify-between p-3 hover:bg-white/5 rounded cursor-pointer transition-all group/opt"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedAr(r);
+                                setOpenDropdown(null);
+                              }}
+                            >
+                              <span className="text-[11px] font-semibold text-white/70 group-hover/opt:text-white transition-opacity">
+                                {r}
+                              </span>
+                              {selectedAr === r && <CheckSvg />}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -1298,35 +1262,41 @@ export default function VideoStudio({
                       {selectedDuration}s
                     </span>
                   </button>
-                  {openDropdown === "duration" && (
-                    <div
-                      ref={dropdownRef}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-md p-3 shadow-2xl border border-white/10 min-w-[140px]"
-                    >
-                      <div className="text-xs font-bold text-white/20 border-b border-white/[0.03] mb-2">
-                        Duration
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {getCurrentDurations(selectedModel).map((d) => (
-                          <div
-                            key={d}
-                            className="flex items-center justify-between p-2 hover:bg-white/5 rounded-md cursor-pointer transition-all group/opt"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDuration(d);
-                              setOpenDropdown(null);
-                            }}
-                          >
-                            <span className="text-xs font-semibold text-white/70 group-hover/opt:text-white">
-                              {d}s
-                            </span>
-                            {selectedDuration === d && <CheckSvg />}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {openDropdown === "duration" && (
+                      <motion.div
+                        ref={dropdownRef}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-md p-3 shadow-2xl border border-white/10 min-w-[140px]"
+                      >
+                        <div className="text-xs font-bold text-white/20 border-b border-white/[0.03] mb-2">
+                          Duration
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {getCurrentDurations(selectedModel).map((d) => (
+                            <div
+                              key={d}
+                              className="flex items-center justify-between p-2 hover:bg-white/5 rounded-md cursor-pointer transition-all group/opt"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDuration(d);
+                                setOpenDropdown(null);
+                              }}
+                            >
+                              <span className="text-xs font-semibold text-white/70 group-hover/opt:text-white">
+                                {d}s
+                              </span>
+                              {selectedDuration === d && <CheckSvg />}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -1353,35 +1323,41 @@ export default function VideoStudio({
                       {selectedResolution || "720p"}
                     </span>
                   </button>
-                  {openDropdown === "resolution" && (
-                    <div
-                      ref={dropdownRef}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-md p-3 shadow-2xl border border-white/[0.05] min-w-[140px]"
-                    >
-                      <div className="text-xs font-bold text-white/20 border-b border-white/[0.03] mb-2">
-                        Resolution
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {getCurrentResolutions(selectedModel).map((r) => (
-                          <div
-                            key={r}
-                            className="flex items-center justify-between p-3 hover:bg-white/5 rounded cursor-pointer transition-all group/opt"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedResolution(r);
-                              setOpenDropdown(null);
-                            }}
-                          >
-                            <span className="text-[11px] font-semibold text-white/70 group-hover/opt:text-white">
-                              {r}
-                            </span>
-                            {selectedResolution === r && <CheckSvg />}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {openDropdown === "resolution" && (
+                      <motion.div
+                        ref={dropdownRef}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-md p-3 shadow-2xl border border-white/[0.05] min-w-[140px]"
+                      >
+                        <div className="text-xs font-bold text-white/20 border-b border-white/[0.03] mb-2">
+                          Resolution
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {getCurrentResolutions(selectedModel).map((r) => (
+                            <div
+                              key={r}
+                              className="flex items-center justify-between p-3 hover:bg-white/5 rounded cursor-pointer transition-all group/opt"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedResolution(r);
+                                setOpenDropdown(null);
+                              }}
+                            >
+                              <span className="text-[11px] font-semibold text-white/70 group-hover/opt:text-white">
+                                {r}
+                              </span>
+                              {selectedResolution === r && <CheckSvg />}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

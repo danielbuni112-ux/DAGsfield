@@ -2,7 +2,7 @@ import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV
 
 const BASE_URL = 'https://api.muapi.ai';
 
-async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000) {
+async function pollForResult(requestId, key, onStatusUpdate, maxAttempts = 900, interval = 2000) {
     const pollUrl = `${BASE_URL}/api/v1/predictions/${requestId}/result`;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         await new Promise(resolve => setTimeout(resolve, interval));
@@ -17,6 +17,15 @@ async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000)
             }
             const data = await response.json();
             const status = data.status?.toLowerCase();
+
+            if (onStatusUpdate) {
+                onStatusUpdate({ 
+                    status: status === 'completed' || status === 'succeeded' || status === 'success' ? 'completed' : 'processing', 
+                    message: data.status_text || `Status: ${status}`,
+                    progress: data.progress 
+                });
+            }
+
             if (status === 'completed' || status === 'succeeded' || status === 'success') return data;
             if (status === 'failed' || status === 'error') throw new Error(`Generation failed: ${data.error || 'Unknown error'}`);
         } catch (error) {
@@ -26,7 +35,7 @@ async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000)
     throw new Error('Generation timed out after polling.');
 }
 
-async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 60) {
+async function submitAndPoll(endpoint, payload, key, onRequestId, onStatusUpdate, maxAttempts = 60) {
     const url = `${BASE_URL}/api/v1/${endpoint}`;
     const response = await fetch(url, {
         method: 'POST',
@@ -41,7 +50,12 @@ async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 
     const requestId = submitData.request_id || submitData.id;
     if (!requestId) return submitData;
     if (onRequestId) onRequestId(requestId);
-    const result = await pollForResult(requestId, key, maxAttempts);
+    
+    if (onStatusUpdate) {
+        onStatusUpdate({ status: 'queued', message: 'In queue...' });
+    }
+
+    const result = await pollForResult(requestId, key, onStatusUpdate, maxAttempts);
     const outputUrl = result.outputs?.[0] || result.url || result.output?.url;
     return { ...result, url: outputUrl };
 }
@@ -56,7 +70,7 @@ export async function generateImage(apiKey, params) {
     if (params.image_url) { payload.image_url = params.image_url; payload.strength = params.strength || 0.6; }
     else payload.image_url = null;
     if (params.seed && params.seed !== -1) payload.seed = params.seed;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 60);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, params.onStatusUpdate, 60);
 }
 
 export async function generateI2I(apiKey, params) {
@@ -73,7 +87,7 @@ export async function generateI2I(apiKey, params) {
     if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
     if (params.resolution) payload.resolution = params.resolution;
     if (params.quality) payload.quality = params.quality;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 60);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, params.onStatusUpdate, 60);
 }
 
 export async function generateVideo(apiKey, params) {
@@ -87,7 +101,7 @@ export async function generateVideo(apiKey, params) {
     if (params.quality) payload.quality = params.quality;
     if (params.mode) payload.mode = params.mode;
     if (params.image_url) payload.image_url = params.image_url;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, params.onStatusUpdate, 900);
 }
 
 export async function generateI2V(apiKey, params) {
@@ -105,7 +119,7 @@ export async function generateI2V(apiKey, params) {
     if (params.resolution) payload.resolution = params.resolution;
     if (params.quality) payload.quality = params.quality;
     if (params.mode) payload.mode = params.mode;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, params.onStatusUpdate, 900);
 }
 
 export async function processLipSync(apiKey, params) {
@@ -118,7 +132,7 @@ export async function processLipSync(apiKey, params) {
     if (params.prompt) payload.prompt = params.prompt;
     if (params.resolution) payload.resolution = params.resolution;
     if (params.seed !== undefined && params.seed !== -1) payload.seed = params.seed;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, params.onStatusUpdate, 900);
 }
 
 export function uploadFile(apiKey, file, onProgress) {
