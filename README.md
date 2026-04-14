@@ -23,6 +23,7 @@ One-click installers — no Node.js or terminal required.
 | macOS Apple Silicon (M1/M2/M3/M4) | [Open Generative AI-1.0.0-arm64.dmg](https://github.com/Anil-matcha/Open-Generative-AI/releases/download/v1.0.0/Open.Generative.AI-1.0.0-arm64.dmg) |
 | macOS Intel (x64) | [Open Generative AI-1.0.0.dmg](https://github.com/Anil-matcha/Open-Generative-AI/releases/download/v1.0.0/Open.Generative.AI-1.0.0.dmg) |
 | Windows (x64 + ARM64) | [Open Generative AI Setup 1.0.0.exe](https://github.com/Anil-matcha/Open-Generative-AI/releases/download/v1.0.0/Open.Generative.AI.Setup.1.0.0.exe) |
+| Linux (Ubuntu x64) | Build locally with `npm run electron:build:linux` |
 
 All releases: [github.com/Anil-matcha/Open-Generative-AI/releases](https://github.com/Anil-matcha/Open-Generative-AI/releases)
 
@@ -55,6 +56,48 @@ Windows SmartScreen may show a warning because the installer is not code-signed:
 2. Click **Run anyway**
 
 The app will install silently to `%LocalAppData%` with a Start Menu shortcut.
+
+### Ubuntu / Linux Installation
+
+Linux artifacts are available when building with Electron Builder:
+
+```bash
+# Build Linux installers (AppImage + .deb)
+npm run electron:build:linux
+```
+
+Generated files are written to the `release/` folder:
+- **AppImage** — portable, run directly after making executable:
+  ```bash
+  chmod +x "release/Open Generative AI-*.AppImage"
+  ./release/Open\ Generative\ AI-*.AppImage
+  ```
+- **.deb** — install on Debian/Ubuntu:
+  ```bash
+  sudo apt install ./release/open-generative-ai_*_amd64.deb
+  ```
+
+If AppImage fails to start on older systems, install `libfuse2`:
+
+```bash
+sudo apt install libfuse2
+```
+
+#### Ubuntu 24.04+ / AppArmor sandbox restriction
+
+Ubuntu 24.04 and later enable a kernel security policy (`apparmor_restrict_unprivileged_userns`) that blocks Chromium's user-namespace sandbox. If the app fails to start silently or crashes immediately, you have two options:
+
+**Option A — Recommended: install the `.deb` instead.**
+The `.deb` package ships an AppArmor profile that grants the required permission automatically on install with no system-wide changes.
+
+**Option B — Temporary system fix (AppImage users):**
+```bash
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+```
+This lasts until next reboot. To make it permanent:
+```bash
+echo 'kernel.apparmor_restrict_unprivileged_userns=0' | sudo tee /etc/sysctl.d/99-userns.conf
+```
 
 ---
 
@@ -250,6 +293,9 @@ npm run electron:build
 
 # Windows (NSIS installer — x64 + ARM64)
 npm run electron:build:win
+
+# Linux (AppImage + DEB — x64)
+npm run electron:build:linux
 
 # Both platforms in one pass
 npm run electron:build:all

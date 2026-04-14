@@ -9,6 +9,17 @@ import { AuthModal } from './AuthModal.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { savePendingJob, removePendingJob, getPendingJobs } from '../lib/pendingJobs.js';
 
+function createInlineInstructions(type) {
+    const el = document.createElement('div');
+    el.className = 'w-full text-center text-white/30 text-sm flex flex-col items-center gap-2 py-2';
+    const icon = type === 'image' ? '🖼️' : '🎬';
+    el.innerHTML = `
+        <p>${icon} Enter a prompt above and click <span class="text-primary font-semibold">Generate</span> to create your ${type}.</p>
+        <p class="text-xs text-white/20">Tip: Be descriptive — include style, lighting, mood, and subject for best results.</p>
+    `;
+    return el;
+}
+
 export function ImageStudio() {
     const container = document.createElement('div');
     container.className = 'w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden';
