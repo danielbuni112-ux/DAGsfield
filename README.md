@@ -1,4 +1,4 @@
-# Open Generative AI — Uncensored Open-Source Alternative to Higgsfield AI, Freepik, Krea, Openart AI
+# Open Generative AI — Uncensored Open-Source Alternative to VosuAI, Higgsfield AI, Freepik, Krea, Openart AI
 
 > **The free, open-source, unrestricted alternative to Higgsfield AI, Freepik, Krea, Openart AI.** Generate AI images and videos using 200+ state-of-the-art models — no content filters, no closed ecosystem, no subscription fees.
 
