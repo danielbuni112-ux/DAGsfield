@@ -156,37 +156,56 @@ async function getBinaryStatus() {
     return { exists, path: BINARY_PATH };
 }
 
+// Metal-enabled binaries hosted on our own release (macOS arm64 only).
+// Other platforms fall back to the stock leejet release.
+const CUSTOM_BINARIES = {
+    'darwin-arm64': 'https://github.com/Anil-matcha/Open-Generative-AI/releases/download/v1.0.3-binaries/sd-cli-metal-macos-arm64.zip',
+};
+
 async function downloadBinary(mainWindow) {
     const send = (data) => mainWindow?.webContents.send('local-ai:download-progress', { id: '__binary__', ...data });
 
     try {
         send({ phase: 'fetching-release', progress: 0 });
-        const releaseData = await new Promise((resolve, reject) => {
-            https.get(
-                'https://api.github.com/repos/leejet/stable-diffusion.cpp/releases/latest',
-                { headers: { 'User-Agent': 'open-generative-ai' } },
-                (res) => {
-                    let body = '';
-                    res.on('data', (d) => { body += d; });
-                    res.on('end', () => {
-                        try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
-                    });
-                    res.on('error', reject);
-                }
-            ).on('error', reject);
-        });
 
-        const matches = getBinaryAssetMatcher();
-        const allZips = releaseData.assets?.filter(a => a.name.endsWith('.zip')) || [];
-        const asset = allZips.find(a => matches(a.name));
-        if (!asset) {
-            const available = allZips.map(a => a.name).join(', ');
-            throw new Error(`No binary found for this platform. Available: ${available}`);
+        const platformKey = `${process.platform}-${process.arch}`;
+        const customUrl = CUSTOM_BINARIES[platformKey];
+
+        let downloadUrl, zipName;
+
+        if (customUrl) {
+            downloadUrl = customUrl;
+            zipName = path.basename(customUrl);
+        } else {
+            const releaseData = await new Promise((resolve, reject) => {
+                https.get(
+                    'https://api.github.com/repos/leejet/stable-diffusion.cpp/releases/latest',
+                    { headers: { 'User-Agent': 'open-generative-ai' } },
+                    (res) => {
+                        let body = '';
+                        res.on('data', (d) => { body += d; });
+                        res.on('end', () => {
+                            try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+                        });
+                        res.on('error', reject);
+                    }
+                ).on('error', reject);
+            });
+
+            const matches = getBinaryAssetMatcher();
+            const allZips = releaseData.assets?.filter(a => a.name.endsWith('.zip')) || [];
+            const asset = allZips.find(a => matches(a.name));
+            if (!asset) {
+                const available = allZips.map(a => a.name).join(', ');
+                throw new Error(`No binary found for this platform. Available: ${available}`);
+            }
+            downloadUrl = asset.browser_download_url;
+            zipName = asset.name;
         }
 
         send({ phase: 'downloading', progress: 0 });
-        const zipPath = path.join(BIN_DIR, asset.name);
-        await downloadFile(asset.browser_download_url, zipPath, (p) => {
+        const zipPath = path.join(BIN_DIR, zipName);
+        await downloadFile(downloadUrl, zipPath, (p) => {
             send({ phase: 'downloading', progress: p });
         });
 
