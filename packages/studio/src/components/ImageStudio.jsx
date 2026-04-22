@@ -733,6 +733,8 @@ export default function ImageStudio({
     return resolutions[0] || null;
   });
   const [maxImages, setMaxImages] = useState(1);
+  // Number of images to generate in parallel per "Generate" click (1..4).
+  const [batchCount, setBatchCount] = useState(1);
 
   // ── Prompt / upload state ───────────────────────────────────────────────
   const [prompt, setPrompt] = useState("");
@@ -781,6 +783,7 @@ export default function ImageStudio({
         if (data.selectedAr) setSelectedAr(data.selectedAr);
         if (data.selectedQuality) setSelectedQuality(data.selectedQuality);
         if (data.maxImages) setMaxImages(data.maxImages);
+        if (data.batchCount) setBatchCount(data.batchCount);
         if (data.prompt) setPrompt(data.prompt);
         if (data.uploadedImageUrls) setUploadedImageUrls(data.uploadedImageUrls);
         if (data.localHistory) setLocalHistory(data.localHistory);
@@ -801,6 +804,7 @@ export default function ImageStudio({
           selectedAr,
           selectedQuality,
           maxImages,
+          batchCount,
           prompt,
           uploadedImageUrls,
           localHistory,
@@ -818,6 +822,7 @@ export default function ImageStudio({
     selectedAr,
     selectedQuality,
     maxImages,
+    batchCount,
     prompt,
     uploadedImageUrls,
     localHistory,
@@ -942,8 +947,11 @@ export default function ImageStudio({
     setGenerating(true);
     setGenerateError(null);
 
-    try {
-      let res;
+    const count = Math.max(1, Math.min(4, parseInt(batchCount, 10) || 1));
+    const trimmedPrompt = prompt.trim();
+
+    // Build params once; each slot reuses the same payload (seed is left random).
+    const buildParams = () => {
       if (imageMode) {
         const genParams = {
           model: selectedModelId,
@@ -951,28 +959,48 @@ export default function ImageStudio({
           image_url: uploadedImageUrls[0],
           aspect_ratio: selectedAr,
         };
-        if (prompt.trim()) genParams.prompt = prompt.trim();
+        if (trimmedPrompt) genParams.prompt = trimmedPrompt;
         if (currentQualityField && selectedQuality) {
           genParams[currentQualityField] = selectedQuality;
         }
-        res = await generateI2I(apiKey, genParams);
-      } else {
-        const genParams = {
-          model: selectedModelId,
-          prompt: prompt.trim(),
-          aspect_ratio: selectedAr,
-        };
-        if (currentQualityField && selectedQuality) {
-          genParams[currentQualityField] = selectedQuality;
-        }
-        res = await generateImage(apiKey, genParams);
+        return genParams;
+      }
+      const genParams = {
+        model: selectedModelId,
+        prompt: trimmedPrompt,
+        aspect_ratio: selectedAr,
+      };
+      if (currentQualityField && selectedQuality) {
+        genParams[currentQualityField] = selectedQuality;
+      }
+      return genParams;
+    };
+
+    try {
+      // Run all batch slots in parallel. Each call returns its own image URL
+      // (the API doesn't expose a server-side batch option on the /v1 endpoints,
+      // so we fan out client-side and treat each response as an independent item).
+      const results = await Promise.allSettled(
+        Array.from({ length: count }, () =>
+          imageMode ? generateI2I(apiKey, buildParams()) : generateImage(apiKey, buildParams()),
+        ),
+      );
+
+      const successes = results
+        .filter((r) => r.status === "fulfilled" && r.value && r.value.url)
+        .map((r) => r.value);
+
+      if (successes.length === 0) {
+        const firstRejection = results.find((r) => r.status === "rejected");
+        const err = firstRejection?.reason;
+        throw err instanceof Error ? err : new Error("No image URL returned by API");
       }
 
-      if (res && res.url) {
+      successes.forEach((res, i) => {
         const entry = {
-          id: res.id || Date.now().toString(),
+          id: res.id || `${Date.now()}-${i}`,
           url: res.url,
-          prompt: prompt.trim(),
+          prompt: trimmedPrompt,
           model: selectedModelId,
           aspect_ratio: selectedAr,
           timestamp: new Date().toISOString(),
@@ -981,11 +1009,14 @@ export default function ImageStudio({
         onGenerationComplete?.({
           url: res.url,
           model: selectedModelId,
-          prompt: prompt.trim(),
+          prompt: trimmedPrompt,
           type: "image",
         });
-      } else {
-        throw new Error("No image URL returned by API");
+      });
+
+      const failureCount = results.length - successes.length;
+      if (failureCount > 0) {
+        console.warn(`[ImageStudio] ${failureCount}/${count} batch slot(s) failed`);
       }
     } catch (e) {
       console.error("[ImageStudio] Generation failed:", e);
@@ -1254,6 +1285,44 @@ export default function ImageStudio({
                   )}
                 </div>
               )}
+
+              {/* Batch count button (1–4 images per generation) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDropdownOpen((o) => (o === "batch" ? null : "batch"));
+                  }}
+                  title="Number of images per generation"
+                  className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] rounded-md transition-all border border-white/[0.03] group whitespace-nowrap"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-40 text-white">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                  <span className="text-[11px] font-semibold text-white/70 group-hover:text-[#d9ff00] transition-colors">
+                    x{batchCount}
+                  </span>
+                </button>
+
+                {dropdownOpen === "batch" && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute bottom-[calc(100%+12px)] left-0 z-50 bg-[#0a0a0a] rounded-md p-3 shadow-2xl border border-white/[0.05] min-w-[140px]"
+                  >
+                    <SimpleDropdown
+                      title="Batch Size"
+                      options={[1, 2, 3, 4]}
+                      selected={batchCount}
+                      onSelect={(val) => setBatchCount(val)}
+                      onClose={() => setDropdownOpen(null)}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Generate button */}

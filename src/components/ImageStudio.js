@@ -844,9 +844,9 @@ export function ImageStudio() {
     const imageContainer = document.createElement('div');
     imageContainer.className = 'relative group';
 
-    const resultImg = document.createElement('img');
-    resultImg.className = 'max-h-[60vh] max-w-[80vw] rounded-3xl shadow-3xl border border-white/10 interactive-glow object-contain';
-    imageContainer.appendChild(resultImg);
+    // Tracks the URL currently featured in the canvas (used by the Download button
+    // and to know which image out of a batch the user has selected).
+    let currentCanvasUrl = null;
 
     // Canvas Controls
     const canvasControls = document.createElement('div');
@@ -872,20 +872,55 @@ export function ImageStudio() {
     canvas.appendChild(canvasControls);
     container.appendChild(canvas);
 
-    // --- Helper: Show image in canvas ---
-    const showImageInCanvas = (imageUrl) => {
+    // --- Helper: Reveal the canvas once the first image has loaded ---
+    const revealCanvas = () => {
+        canvas.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10', 'scale-95');
+        canvas.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+        canvasControls.classList.remove('opacity-0');
+        canvasControls.classList.add('opacity-100');
+    };
+
+    // --- Helper: Show one or many images in the canvas ---
+    // A single URL renders as before (big featured image). Multiple URLs render as
+    // a responsive grid where each tile can be clicked to expand to full size.
+    const showImagesInCanvas = (imageUrls) => {
+        const urls = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
+        if (urls.length === 0) return;
+
         // Fully hide hero and prompt
         hero.classList.add('hidden');
         promptWrapper.classList.add('hidden');
 
-        resultImg.src = imageUrl;
-        resultImg.onload = () => {
-            canvas.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10', 'scale-95');
-            canvas.classList.add('opacity-100', 'translate-y-0', 'scale-100');
-            canvasControls.classList.remove('opacity-0');
-            canvasControls.classList.add('opacity-100');
-        };
+        imageContainer.innerHTML = '';
+        currentCanvasUrl = urls[0];
+
+        if (urls.length === 1) {
+            const img = document.createElement('img');
+            img.className = 'max-h-[60vh] max-w-[80vw] rounded-3xl shadow-3xl border border-white/10 interactive-glow object-contain';
+            img.src = urls[0];
+            img.onload = revealCanvas;
+            imageContainer.appendChild(img);
+        } else {
+            // Up to 4 images — render as a 2-column grid (2x1 for 2, 2x2 for 3–4).
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 gap-3 md:gap-4 max-h-[70vh]';
+            urls.forEach((u, i) => {
+                const tile = document.createElement('img');
+                tile.className = 'max-h-[32vh] max-w-[38vw] rounded-2xl shadow-2xl border border-white/10 object-contain cursor-pointer hover:scale-[1.02] hover:border-primary/50 transition-all';
+                tile.src = u;
+                if (i === 0) tile.onload = revealCanvas;
+                tile.onclick = () => showImagesInCanvas([u]);
+                tile.title = 'Click to expand';
+                grid.appendChild(tile);
+            });
+            imageContainer.appendChild(grid);
+            // Fallback reveal in case the first image is cached and onload already fired
+            revealCanvas();
+        }
     };
+
+    // Backward-compatible single-image wrapper
+    const showImageInCanvas = (imageUrl) => showImagesInCanvas([imageUrl]);
 
     // --- Helper: Add to history ---
     const addToHistory = (entry) => {
@@ -1001,7 +1036,7 @@ export function ImageStudio() {
 
     // --- Button Handlers ---
     downloadBtn.onclick = () => {
-        const current = resultImg.src;
+        const current = currentCanvasUrl;
         if (current) {
             const entry = generationHistory.find(e => e.url === current);
             downloadImage(current, `muapi-${entry?.id || 'image'}.jpg`);
@@ -1064,65 +1099,119 @@ export function ImageStudio() {
 
         hero.classList.add('opacity-0', 'scale-95', '-translate-y-10', 'pointer-events-none');
         generateBtn.disabled = true;
-        generateBtn.innerHTML = `<span class="animate-spin inline-block mr-2 text-black">◌</span> Generating...`;
 
-        let hadError = false;
-        let capturedRequestId = null;
+        // Clamp batch count to the slider's configured range as a defensive guard.
+        const count = Math.max(1, Math.min(4, parseInt(batchCount, 10) || 1));
+        const updateBtnProgress = (done) => {
+            const label = count > 1 ? `Generating ${done}/${count}...` : 'Generating...';
+            generateBtn.innerHTML = `<span class="animate-spin inline-block mr-2 text-black">◌</span> ${label}`;
+        };
+        updateBtnProgress(0);
+
         const historyMeta = { prompt, model: selectedModel, aspect_ratio: selectedAr };
+        const qualityLabel = document.getElementById('quality-btn-label')?.textContent;
+        const qualityField = getCurrentQualityField(selectedModel);
 
-        try {
-            let res;
-            const qualityLabel = document.getElementById('quality-btn-label')?.textContent;
+        // Build one set of generation params for a single slot in the batch.
+        // Each slot tracks its own requestId so pending jobs can be individually
+        // cleared (or resumed on reload) without one failure affecting the others.
+        const buildSlot = (slotIdx) => {
+            const slot = { requestId: null };
+            const onRequestId = (rid) => {
+                slot.requestId = rid;
+                savePendingJob({
+                    requestId: rid,
+                    studioType: 'image',
+                    historyMeta,
+                    maxAttempts: 60,
+                    interval: 2000,
+                    submittedAt: Date.now()
+                });
+            };
+
+            let genParams;
             if (imageMode) {
-                const genParams = {
+                genParams = {
                     model: selectedModel,
                     images_list: uploadedImageUrls,
                     image_url: uploadedImageUrls[0], // backward compat for single-image models
                     aspect_ratio: selectedAr,
-                    onRequestId: (rid) => {
-                        capturedRequestId = rid;
-                        savePendingJob({ requestId: rid, studioType: 'image', historyMeta, maxAttempts: 60, interval: 2000, submittedAt: Date.now() });
-                    }
+                    onRequestId
                 };
                 if (prompt) genParams.prompt = prompt;
-                const qualityField = getCurrentQualityField(selectedModel);
-                if (qualityField && qualityLabel) genParams[qualityField] = qualityLabel;
-                res = await muapi.generateI2I(genParams);
             } else {
-                const genParams = {
+                genParams = {
                     model: selectedModel,
                     prompt,
                     aspect_ratio: selectedAr,
-                    onRequestId: (rid) => {
-                        capturedRequestId = rid;
-                        savePendingJob({ requestId: rid, studioType: 'image', historyMeta, maxAttempts: 60, interval: 2000, submittedAt: Date.now() });
-                    }
+                    onRequestId
                 };
-                const qualityField = getCurrentQualityField(selectedModel);
-                if (qualityField && qualityLabel) genParams[qualityField] = qualityLabel;
-                res = await muapi.generateImage(genParams);
+            }
+            if (qualityField && qualityLabel) genParams[qualityField] = qualityLabel;
+
+            // When the user has pinned a specific seed we offset it per slot so the
+            // batch yields distinct variations rather than 4 identical images.
+            // A seed of -1 means "random" and is left alone for each call.
+            if (typeof seed === 'number' && seed !== -1) {
+                genParams.seed = seed + slotIdx;
             }
 
-            console.log('[ImageStudio] Full response:', res);
+            slot.params = genParams;
+            return slot;
+        };
 
-            if (res && res.url) {
-                if (capturedRequestId) removePendingJob(capturedRequestId);
+        const slots = Array.from({ length: count }, (_, i) => buildSlot(i));
+
+        // Kick off all slots in parallel and report progress as each one finishes.
+        let completed = 0;
+        const runSlot = async (slot) => {
+            try {
+                const res = imageMode
+                    ? await muapi.generateI2I(slot.params)
+                    : await muapi.generateImage(slot.params);
+                if (slot.requestId) removePendingJob(slot.requestId);
+                if (!res || !res.url) throw new Error('No image URL returned by API');
+                return { ok: true, res, slot };
+            } catch (err) {
+                if (slot.requestId) removePendingJob(slot.requestId);
+                return { ok: false, error: err, slot };
+            } finally {
+                completed++;
+                updateBtnProgress(completed);
+            }
+        };
+
+        let hadError = false;
+        try {
+            const results = await Promise.all(slots.map(runSlot));
+            const successes = results.filter(r => r.ok);
+            const failures = results.filter(r => !r.ok);
+
+            if (successes.length === 0) {
+                const firstErr = failures[0]?.error;
+                throw firstErr instanceof Error ? firstErr : new Error('All generations failed');
+            }
+
+            const urls = successes.map(r => {
+                const { res, slot } = r;
                 addToHistory({
-                    id: res.id || capturedRequestId || Date.now().toString(),
+                    id: res.id || slot.requestId || `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                     url: res.url,
                     prompt: prompt,
                     model: selectedModel,
                     aspect_ratio: selectedAr,
                     timestamp: new Date().toISOString()
                 });
-                showImageInCanvas(res.url);
-            } else {
-                console.error('[ImageStudio] No image URL in response:', res);
-                throw new Error('No image URL returned by API');
+                return res.url;
+            });
+
+            showImagesInCanvas(urls);
+
+            if (failures.length > 0) {
+                console.warn(`[ImageStudio] ${failures.length}/${count} batch slot(s) failed:`, failures.map(f => f.error?.message));
             }
         } catch (e) {
             hadError = true;
-            if (capturedRequestId) removePendingJob(capturedRequestId);
             console.error(e);
             // Restore hero so the page doesn't look broken after a failed generation
             hero.classList.remove('opacity-0', 'scale-95', '-translate-y-10', 'pointer-events-none');
