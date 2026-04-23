@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/studio",
     "packages/workflow-ui",
-    "packages/ai-agent"
+    "packages/ai-agent",
+    "packages/workflow-builder"
   ],
   "scripts": {
     "dev": "next dev",
@@ -42,10 +43,7 @@
       "target": [
         {
           "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         }
       ]
     },
@@ -54,9 +52,7 @@
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ]
     },
@@ -73,15 +69,11 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         },
         {
           "target": "deb",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ]
     }
@@ -93,7 +85,8 @@
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.4.1",
     "studio": "*",
-    "workflow-builder": "file:./packages/workflow-ui",
+    "workflow-builder": "file:./packages/workflow-builder",
+    "workflow-ui": "file:./packages/workflow-ui",
     "ai-agent": "file:./packages/ai-agent"
   },
   "devDependencies": {
