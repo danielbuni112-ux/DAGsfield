@@ -29,6 +29,20 @@ import {
 
 const BASE_URL = '/api/fal';
 
+// Normalize resolution value for fal API (case-sensitive).
+// UI sends lowercase "1k" / "2k" / "4k" — fal expects uppercase "1K" / "2K" / "4K".
+// Also accepts numeric forms ("3840", "2160p") and returns null for unknown.
+function normalizeResolution(value) {
+  if (!value) return null;
+  const v = String(value).trim().toLowerCase();
+  if (v === '4k' || v === '4' || v === '3840' || v === '4096' || v === '2160p') return '4K';
+  if (v === '2k' || v === '2' || v === '1920' || v === '1080p') return '2K';
+  if (v === '1k' || v === '1' || v === '1024' || v === 'hd' || v === '720p') return '1K';
+  // If already in canonical form, pass through
+  if (v === '4K' || v === '2K' || v === '1K') return value;
+  return null;
+}
+
 // ─── Core helpers ────────────────────────────────────────────────────────────
 
 // Throws a user-friendly "Coming Soon" error for models not yet mapped to fal.
@@ -94,15 +108,13 @@ export async function generateImage(apiKey, params) {
 
   const input = { prompt: params.prompt };
 
-  // image_size understands aspect_ratio + resolution together.
-  // For 2K/4K it returns {width,height}, for default — a preset string.
   if (params.aspect_ratio) {
-    input.image_size = aspectToImageSize(params.aspect_ratio, params.resolution);
+    input.image_size = aspectToImageSize(params.aspect_ratio);
   }
-  // Some fal Pro models (e.g. Nano Banana Pro) also accept a separate
-  // `resolution` param. Pass it through if provided — harmless for models
-  // that ignore it.
-  if (params.resolution) input.resolution = params.resolution;
+  // Some fal Pro models (e.g. Nano Banana Pro) accept a separate `resolution`
+  // param ("1K" / "2K" / "4K"). Normalize case — UI sends lowercase "4k".
+  const res = normalizeResolution(params.resolution);
+  if (res) input.resolution = res;
 
   if (params.seed && params.seed !== -1) input.seed = params.seed;
   if (params.num_images) input.num_images = params.num_images;
@@ -125,9 +137,10 @@ export async function generateI2I(apiKey, params) {
   const input = {};
   if (params.prompt) input.prompt = params.prompt;
   if (params.aspect_ratio) {
-    input.image_size = aspectToImageSize(params.aspect_ratio, params.resolution);
+    input.image_size = aspectToImageSize(params.aspect_ratio);
   }
-  if (params.resolution) input.resolution = params.resolution;
+  const resI2I = normalizeResolution(params.resolution);
+  if (resI2I) input.resolution = resI2I;
   if (params.seed && params.seed !== -1) input.seed = params.seed;
 
   const imagesList = params.images_list?.length > 0
@@ -155,7 +168,8 @@ export async function generateVideo(apiKey, params) {
   if (params.prompt) input.prompt = params.prompt;
   if (params.aspect_ratio) input.aspect_ratio = params.aspect_ratio;
   if (params.duration) input.duration = String(params.duration);
-  if (params.resolution) input.resolution = params.resolution;
+  const resVideo = normalizeResolution(params.resolution);
+  if (resVideo) input.resolution = resVideo;
   if (params.image_url) input.image_url = params.image_url;
 
   const result = await requestFal(endpoint, input, params.onRequestId);
@@ -174,7 +188,8 @@ export async function generateI2V(apiKey, params) {
   if (params.image_url) input.image_url = params.image_url;
   if (params.aspect_ratio) input.aspect_ratio = params.aspect_ratio;
   if (params.duration) input.duration = String(params.duration);
-  if (params.resolution) input.resolution = params.resolution;
+  const resI2V = normalizeResolution(params.resolution);
+  if (resI2V) input.resolution = resI2V;
 
   const result = await requestFal(endpoint, input, params.onRequestId);
   return normalizeResult(result);
