@@ -93,7 +93,17 @@ export async function generateImage(apiKey, params) {
   if (!endpoint) throw notSupported(params.model, 'image');
 
   const input = { prompt: params.prompt };
-  if (params.aspect_ratio) input.image_size = aspectToImageSize(params.aspect_ratio);
+
+  // image_size understands aspect_ratio + resolution together.
+  // For 2K/4K it returns {width,height}, for default — a preset string.
+  if (params.aspect_ratio) {
+    input.image_size = aspectToImageSize(params.aspect_ratio, params.resolution);
+  }
+  // Some fal Pro models (e.g. Nano Banana Pro) also accept a separate
+  // `resolution` param. Pass it through if provided — harmless for models
+  // that ignore it.
+  if (params.resolution) input.resolution = params.resolution;
+
   if (params.seed && params.seed !== -1) input.seed = params.seed;
   if (params.num_images) input.num_images = params.num_images;
 
@@ -114,7 +124,10 @@ export async function generateI2I(apiKey, params) {
 
   const input = {};
   if (params.prompt) input.prompt = params.prompt;
-  if (params.aspect_ratio) input.image_size = aspectToImageSize(params.aspect_ratio);
+  if (params.aspect_ratio) {
+    input.image_size = aspectToImageSize(params.aspect_ratio, params.resolution);
+  }
+  if (params.resolution) input.resolution = params.resolution;
   if (params.seed && params.seed !== -1) input.seed = params.seed;
 
   const imagesList = params.images_list?.length > 0

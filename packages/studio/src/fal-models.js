@@ -164,15 +164,49 @@ export function resolveFalEndpoint(modelIdOrEndpoint) {
   return model?.fal_endpoint || null;
 }
 
-// Convert muapi aspect_ratio strings to fal image_size enum
-export function aspectToImageSize(aspect) {
+// Convert muapi aspect_ratio + resolution into fal's image_size parameter.
+// For default/HD → returns preset string (e.g. "landscape_16_9").
+// For 2K/4K      → returns custom object {width, height} so fal generates higher res.
+//
+// Note: not all fal models accept custom {width,height} for image_size. Pro models
+// (Nano Banana Pro, Flux Pro Ultra, etc.) support it. Standard models cap at ~1.5MP.
+export function aspectToImageSize(aspect, resolution = null) {
+  const res = (resolution || '').toString().toLowerCase();
+
+  // 4K — custom pixel dimensions
+  if (res === '4k' || res === '2160p' || res === '3840') {
+    const map4K = {
+      '1:1':  { width: 2048, height: 2048 },
+      '16:9': { width: 3840, height: 2160 },
+      '9:16': { width: 2160, height: 3840 },
+      '4:3':  { width: 2880, height: 2160 },
+      '3:4':  { width: 2160, height: 2880 },
+      '21:9': { width: 3840, height: 1644 },
+    };
+    if (map4K[aspect]) return map4K[aspect];
+  }
+
+  // 2K / 1080p — custom pixel dimensions
+  if (res === '2k' || res === '1080p' || res === '1920') {
+    const map2K = {
+      '1:1':  { width: 1920, height: 1920 },
+      '16:9': { width: 1920, height: 1080 },
+      '9:16': { width: 1080, height: 1920 },
+      '4:3':  { width: 1440, height: 1080 },
+      '3:4':  { width: 1080, height: 1440 },
+      '21:9': { width: 1920, height: 822 },
+    };
+    if (map2K[aspect]) return map2K[aspect];
+  }
+
+  // Default / HD — fal preset string
   const map = {
-    '1:1': 'square_hd',
+    '1:1':  'square_hd',
     '16:9': 'landscape_16_9',
     '9:16': 'portrait_16_9',
-    '4:3': 'landscape_4_3',
-    '3:4': 'portrait_4_3',
-    '21:9': 'landscape_16_9', // fallback
+    '4:3':  'landscape_4_3',
+    '3:4':  'portrait_4_3',
+    '21:9': 'landscape_16_9',
   };
   return map[aspect] || 'square_hd';
 }
