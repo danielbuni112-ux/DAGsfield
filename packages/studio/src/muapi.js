@@ -25,7 +25,27 @@ import {
 import {
   resolveFalEndpoint,
   aspectToImageSize,
+  nativeAspectRatio,
+  IMAGE_MODELS,
 } from './fal-models.js';
+
+// Apply aspect ratio to fal input, using the model's aspectMode.
+//   native     → input.aspect_ratio = "21:9"  (e.g. Nano Banana Pro)
+//   flux_ultra → input.aspect_ratio = "21:9"  (Flux Pro Ultra, limited set)
+//   image_size → input.image_size = preset string OR {width, height} object
+function applyAspect(input, modelId, aspect, resolution) {
+  if (!aspect) return;
+  const model = IMAGE_MODELS[modelId];
+  const mode = model?.aspectMode || 'image_size';
+
+  if (mode === 'native' || mode === 'flux_ultra') {
+    const mapped = nativeAspectRatio(modelId, aspect);
+    if (mapped) input.aspect_ratio = mapped;
+    return;
+  }
+
+  input.image_size = aspectToImageSize(aspect, resolution);
+}
 
 const BASE_URL = '/api/fal';
 
@@ -108,9 +128,11 @@ export async function generateImage(apiKey, params) {
 
   const input = { prompt: params.prompt };
 
-  if (params.aspect_ratio) {
-    input.image_size = aspectToImageSize(params.aspect_ratio);
-  }
+  // Aspect ratio: model-specific mapping.
+  //   - Nano Banana Pro / Flux Pro Ultra → aspect_ratio string passthrough
+  //   - Everything else → image_size preset or {width, height} fallback
+  applyAspect(input, params.model, params.aspect_ratio, params.resolution);
+
   // Some fal Pro models (e.g. Nano Banana Pro) accept a separate `resolution`
   // param ("1K" / "2K" / "4K"). Normalize case — UI sends lowercase "4k".
   const res = normalizeResolution(params.resolution);
@@ -136,9 +158,7 @@ export async function generateI2I(apiKey, params) {
 
   const input = {};
   if (params.prompt) input.prompt = params.prompt;
-  if (params.aspect_ratio) {
-    input.image_size = aspectToImageSize(params.aspect_ratio);
-  }
+  applyAspect(input, params.model, params.aspect_ratio, params.resolution);
   const resI2I = normalizeResolution(params.resolution);
   if (resI2I) input.resolution = resI2I;
   if (params.seed && params.seed !== -1) input.seed = params.seed;
