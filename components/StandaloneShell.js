@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio, MarketingStudio, WorkflowStudio, AgentStudio, getUserBalance } from 'studio';
-import axios from 'axios';
-import ApiKeyModal from './ApiKeyModal';
 
 const TABS = [
   { id: 'image',   label: 'Image Studio' },
@@ -16,12 +14,17 @@ const TABS = [
   { id: 'agents', label: 'Agents' },
 ];
 
-const STORAGE_KEY = 'muapi_key';
+// Server-managed: API ключ muapi живёт ТОЛЬКО в .env.production на сервере
+// (MUAPI_API_KEY), инжектится в запросы серверным прокси /api/muapi/*.
+// Клиент никогда не видит и не хранит ключ. Все вызовы studio функций
+// получают пустую строку — параметр там остался для совместимости, но
+// клиент полагается на серверный прокси для аутентификации.
+const SERVER_MANAGED_KEY = '';
 
 export default function StandaloneShell() {
   const params = useParams();
   const router = useRouter();
-  const slug = params?.slug || []; 
+  const slug = params?.slug || [];
   const idFromParams = params?.id;
   const tabFromParams = params?.tab;
 
@@ -48,12 +51,9 @@ export default function StandaloneShell() {
     if (firstSegment && TABS.find(t => t.id === firstSegment)) return firstSegment;
     return 'image';
   };
-  
-  const [apiKey, setApiKey] = useState(null);
+
   const [activeTab, setActiveTab] = useState(getInitialTab());
-  
   const [balance, setBalance] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -100,9 +100,10 @@ export default function StandaloneShell() {
     }
   }, [activeTab]);
 
-  const fetchBalance = useCallback(async (key) => {
+  const fetchBalance = useCallback(async () => {
     try {
-      const data = await getUserBalance(key);
+      // Ключ игнорируется — сервер подставит свой из env
+      const data = await getUserBalance(SERVER_MANAGED_KEY);
       setBalance(data.balance);
     } catch (err) {
       console.error('Balance fetch failed:', err);
@@ -111,60 +112,15 @@ export default function StandaloneShell() {
 
   useEffect(() => {
     setHasMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setApiKey(stored);
-      fetchBalance(stored);
-      // Sync cookie immediately on mount to establish identity for background requests
-      document.cookie = `muapi_key=${stored}; path=/; max-age=31536000; SameSite=Lax`;
-    }
+    // Fetch balance immediately — server proxy handles auth via env var
+    fetchBalance();
   }, [fetchBalance]);
 
-  const handleKeySave = useCallback((key) => {
-    localStorage.setItem(STORAGE_KEY, key);
-    setApiKey(key);
-    fetchBalance(key);
-    document.cookie = `muapi_key=${key}; path=/; max-age=31536000; SameSite=Lax`;
-  }, [fetchBalance]);
-
-  const handleKeyChange = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setApiKey(null);
-    setBalance(null);
-    document.cookie = "muapi_key=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-  }, []);
-
-  // Inject API key into all outgoing Axios requests (prop-based approach)
-  // We use an interceptor to be selective and NOT send the key to external domains like S3
+  // Poll for balance every 30 seconds
   useEffect(() => {
-    // Safety: Clear any global defaults that might have been set previously
-    delete axios.defaults.headers.common['x-api-key'];
-
-    if (!apiKey) return;
-
-    const interceptorId = axios.interceptors.request.use((config) => {
-      // Check if URL is local/proxied
-      const isRelative = config.url.startsWith('/') || !config.url.startsWith('http');
-      const isInternalProxy = config.url.includes('/api/app') || config.url.includes('/api/workflow') || config.url.includes('/api/agents') || config.url.includes('/api/api') || config.url.includes('/api/v1');
-
-      if (isRelative || isInternalProxy) {
-        config.headers['x-api-key'] = apiKey;
-      }
-      
-      return config;
-    });
-
-    return () => {
-      axios.interceptors.request.eject(interceptorId);
-    };
-  }, [apiKey]);
-
-  // Poll for balance every 30 seconds if key is present
-  useEffect(() => {
-    if (!apiKey) return;
-    const interval = setInterval(() => fetchBalance(apiKey), 30000);
+    const interval = setInterval(fetchBalance, 30000);
     return () => clearInterval(interval);
-  }, [apiKey, fetchBalance]);
+  }, [fetchBalance]);
 
   // Drag and Drop Handlers
   const handleDragOver = useCallback((e) => {
@@ -209,12 +165,8 @@ export default function StandaloneShell() {
     </div>
   );
 
-  if (!apiKey) {
-    return <ApiKeyModal onSave={handleKeySave} />;
-  }
-
   return (
-    <div 
+    <div
       className="h-screen bg-[#030303] flex flex-col overflow-hidden text-white relative"
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
@@ -281,63 +233,20 @@ export default function StandaloneShell() {
                 </span>
               </div>
             </div>
-
-            <div 
-              onClick={() => setShowSettings(true)}
-              className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#d9ff00] to-yellow-200 border border-white/20 cursor-pointer hover:scale-105 transition-transform" 
-            />
           </div>
         </header>
       )}
 
       {/* Studio Content */}
       <div className="flex-1 min-h-0 relative overflow-hidden">
-        {activeTab === 'image'   && <ImageStudio   apiKey={apiKey} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
-        {activeTab === 'video'   && <VideoStudio   apiKey={apiKey} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
-        {activeTab === 'lipsync' && <LipSyncStudio apiKey={apiKey} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
-        {activeTab === 'cinema'  && <CinemaStudio  apiKey={apiKey} />}
-        {activeTab === 'marketing' && <MarketingStudio apiKey={apiKey} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
-        {activeTab === 'workflows' && <WorkflowStudio apiKey={apiKey} isHeaderVisible={isHeaderVisible} onToggleHeader={setIsHeaderVisible} />}
-        {activeTab === 'agents' && <AgentStudio apiKey={apiKey} isHeaderVisible={isHeaderVisible} onToggleHeader={setIsHeaderVisible} />}
+        {activeTab === 'image'   && <ImageStudio   apiKey={SERVER_MANAGED_KEY} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
+        {activeTab === 'video'   && <VideoStudio   apiKey={SERVER_MANAGED_KEY} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
+        {activeTab === 'lipsync' && <LipSyncStudio apiKey={SERVER_MANAGED_KEY} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
+        {activeTab === 'cinema'  && <CinemaStudio  apiKey={SERVER_MANAGED_KEY} />}
+        {activeTab === 'marketing' && <MarketingStudio apiKey={SERVER_MANAGED_KEY} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} />}
+        {activeTab === 'workflows' && <WorkflowStudio apiKey={SERVER_MANAGED_KEY} isHeaderVisible={isHeaderVisible} onToggleHeader={setIsHeaderVisible} />}
+        {activeTab === 'agents' && <AgentStudio apiKey={SERVER_MANAGED_KEY} isHeaderVisible={isHeaderVisible} onToggleHeader={setIsHeaderVisible} />}
       </div>
-
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in-up">
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-8 w-full max-w-sm shadow-2xl">
-            <h2 className="text-white font-bold text-lg mb-2">Settings</h2>
-            <p className="text-white/40 text-[13px] mb-8">
-              Manage your AI studio preferences and authentication.
-            </p>
-            
-            <div className="space-y-4 mb-8">
-              <div className="bg-white/5 border border-white/[0.03] rounded-md p-4">
-                <label className="block text-xs font-bold text-white/30 mb-2">
-                   Active API Key
-                </label>
-                <div className="text-[13px] font-mono text-white/80">
-                  {apiKey.slice(0, 8)}••••••••••••••••
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleKeyChange}
-                className="flex-1 h-10 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-all"
-              >
-                Change Key
-              </button>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="flex-1 h-10 rounded-md bg-white/5 text-white/80 hover:bg-white/10 text-xs font-semibold transition-all border border-white/5"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

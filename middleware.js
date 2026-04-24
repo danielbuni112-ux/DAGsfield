@@ -1,31 +1,29 @@
 import { NextResponse } from 'next/server';
 
+// Fallback proxy for legacy /api/v1/* paths that still hit the app directly.
+// New client code goes through /api/muapi/[[...path]]/route.js which injects
+// the server-managed MUAPI_API_KEY from env. This middleware does the same
+// injection for any remaining /api/v1 calls so the client never needs to
+// know the key.
 export function middleware(request) {
     const url = request.nextUrl;
-    
-    // Catch requests to /api/workflow, /api/app, and /api/v1
-    const isMuApi = url.pathname.startsWith('/api/workflow') || 
-                    url.pathname.startsWith('/api/app') || 
-                    url.pathname.startsWith('/api/v1');
 
-    if (isMuApi) {
-        // Remap /api/v1 ONLY if it's not handled by a specific route.
-        // Actually, we'll let existing remapping for /api/v1 stay if needed,
-        // but we'll remove app/workflow as they need special handling.
-        if (url.pathname.startsWith('/api/v1')) {
-            const targetUrl = new URL(url.pathname + url.search, 'https://api.muapi.ai');
-            return NextResponse.rewrite(targetUrl);
+    if (url.pathname.startsWith('/api/v1')) {
+        const targetUrl = new URL(url.pathname + url.search, 'https://api.muapi.ai');
+        const headers = new Headers(request.headers);
+        if (process.env.MUAPI_API_KEY) {
+            headers.set('x-api-key', process.env.MUAPI_API_KEY);
         }
+        return NextResponse.rewrite(targetUrl, {
+            request: { headers }
+        });
     }
 
     return NextResponse.next();
 }
 
-// Match the paths we want to proxy
 export const config = {
     matcher: [
-        '/api/workflow/:path*', 
-        '/api/app/:path*',
         '/api/v1/:path*'
     ],
 };
