@@ -6,6 +6,8 @@ module.exports = {
         "./app/**/*.{js,ts,jsx,tsx}",
         "./components/**/*.{js,ts,jsx,tsx}",
         "./packages/studio/src/**/*.{js,jsx}",
+        "./packages/Vibe-Workflow/packages/workflow-builder/src/**/*.{js,jsx}",
+        "./packages/Open-Poe-AI/packages/agents/src/**/*.{js,jsx}",
     ],
     theme: {
         extend: {
