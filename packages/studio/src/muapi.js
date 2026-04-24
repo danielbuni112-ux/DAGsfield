@@ -1,570 +1,309 @@
-import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getLipSyncModelById } from './models.js';
+// ─────────────────────────────────────────────────────────────────────────────
+// fal.ai client (historically named muapi.js for backwards-compat with the
+// rest of the codebase). All requests are routed through our server proxy at
+// /api/fal/<fal-endpoint>, which injects FAL_KEY from env.
+//
+// Client function signatures preserved from the original muapi.js so that
+// studio components (ImageStudio, VideoStudio, etc.) work without changes.
+// The `apiKey` parameter is accepted but ignored — server handles auth.
+//
+// Features NOT supported in fal.ai (muapi-only):
+//   - Workflow Builder  → stubs return empty arrays
+//   - Agents system     → stubs return empty arrays
+//   - getUserBalance    → returns null (fal doesn't expose this via API)
+// UI shows "Coming Soon" banners on these tabs.
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Client routes to our own Next.js proxy (which injects the real key server-side).
-// Server-side helpers (handleProxyRequest) talk to muapi.ai directly — keep that constant below.
-const BASE_URL = '/api/muapi';
-const UPSTREAM_URL = 'https://api.muapi.ai';
-const PROXY_WF_BASE = '/api/workflow';
+import {
+  getModelById,
+  getVideoModelById,
+  getI2IModelById,
+  getI2VModelById,
+  getV2VModelById,
+  getLipSyncModelById,
+} from './models.js';
+import {
+  resolveFalEndpoint,
+  aspectToImageSize,
+} from './fal-models.js';
 
-async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000) {
-    const pollUrl = `${BASE_URL}/api/v1/predictions/${requestId}/result`;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, interval));
-        try {
-            const response = await fetch(pollUrl, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            if (!response.ok) {
-                const errText = await response.text();
-                if (response.status >= 500) continue;
-                throw new Error(`Poll Failed: ${response.status} - ${errText.slice(0, 100)}`);
-            }
-            const data = await response.json();
-            const status = data.status?.toLowerCase();
-            if (status === 'completed' || status === 'succeeded' || status === 'success') return data;
-            if (status === 'failed' || status === 'error') throw new Error(`Generation failed: ${data.error || 'Unknown error'}`);
-        } catch (error) {
-            if (attempt === maxAttempts) throw error;
-        }
-    }
-    throw new Error('Generation timed out after polling.');
+const BASE_URL = '/api/fal';
+
+// ─── Core helpers ────────────────────────────────────────────────────────────
+
+// Throws a user-friendly "Coming Soon" error for models not yet mapped to fal.
+function notSupported(modelId, kind = 'model') {
+  const err = new Error(
+    `Модель "${modelId}" пока не доступна через fal.ai. Coming soon!\n` +
+    `Сейчас доступны: Nano Banana, Flux Dev/Pro/Schnell, SDXL, Ideogram, ` +
+    `Kling, Hailuo, Seedance, Sync LipSync.`
+  );
+  err.code = 'MODEL_NOT_SUPPORTED';
+  err.kind = kind;
+  return err;
 }
 
-async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 60) {
-    const url = `${BASE_URL}/api/v1/${endpoint}`;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 100)}`);
+// Main request function. Server uses fal.subscribe which polls internally,
+// so one HTTP request from the client = one final result (no client-side polling).
+async function requestFal(endpoint, input, onRequestId) {
+  const url = `${BASE_URL}/${endpoint}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    let errText = '';
+    try {
+      const errJson = await response.json();
+      errText = errJson?.error || JSON.stringify(errJson);
+    } catch {
+      errText = await response.text();
     }
-    const submitData = await response.json();
-    const requestId = submitData.request_id || submitData.id;
-    if (!requestId) return submitData;
-    if (onRequestId) onRequestId(requestId);
-    const result = await pollForResult(requestId, key, maxAttempts);
-    const outputUrl = result.outputs?.[0] || result.url || result.output?.url;
-    return { ...result, url: outputUrl };
+    throw new Error(`API ${response.status}: ${errText.slice(0, 300)}`);
+  }
+
+  const body = await response.json();
+  // fal proxy returns { data: {...}, requestId: null }
+  const data = body?.data || body;
+  if (onRequestId && body?.requestId) onRequestId(body.requestId);
+  return data;
 }
+
+// Normalize fal response to have { url, outputs } for legacy UI components.
+function normalizeResult(falResult) {
+  const imageUrl = falResult?.images?.[0]?.url || falResult?.image?.url;
+  const videoUrl = falResult?.video?.url || falResult?.video_url;
+  const audioUrl = falResult?.audio?.url || falResult?.audio_url;
+  const primary = imageUrl || videoUrl || audioUrl || falResult?.url;
+
+  return {
+    ...falResult,
+    url: primary,
+    outputs: [primary],
+  };
+}
+
+// ─── Image generation ────────────────────────────────────────────────────────
 
 export async function generateImage(apiKey, params) {
-    const modelInfo = getModelById(params.model);
-    const endpoint = modelInfo?.endpoint || params.model;
-    const payload = { prompt: params.prompt };
-    if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
-    if (params.resolution) payload.resolution = params.resolution;
-    if (params.quality) payload.quality = params.quality;
-    if (params.image_url) {
-        payload.image_url = params.image_url;
-        payload.strength = params.strength || 0.6;
-    } else if (params.images_list) {
-        payload.images_list = params.images_list;
-    } else {
-        payload.image_url = null;
-    }
-    if (params.seed && params.seed !== -1) payload.seed = params.seed;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 60);
+  const modelInfo = getModelById(params.model);
+  const endpoint = resolveFalEndpoint(params.model) || resolveFalEndpoint(modelInfo?.endpoint);
+  if (!endpoint) throw notSupported(params.model, 'image');
+
+  const input = { prompt: params.prompt };
+  if (params.aspect_ratio) input.image_size = aspectToImageSize(params.aspect_ratio);
+  if (params.seed && params.seed !== -1) input.seed = params.seed;
+  if (params.num_images) input.num_images = params.num_images;
+
+  // Image reference for edit/i2i models that accept it alongside text prompt
+  if (params.image_url) input.image_url = params.image_url;
+  if (params.images_list?.length) input.image_urls = params.images_list;
+
+  const result = await requestFal(endpoint, input, params.onRequestId);
+  return normalizeResult(result);
 }
+
+// ─── Image-to-Image ──────────────────────────────────────────────────────────
 
 export async function generateI2I(apiKey, params) {
-    const modelInfo = getI2IModelById(params.model);
-    const endpoint = modelInfo?.endpoint || params.model;
-    const payload = {};
-    if (params.prompt) payload.prompt = params.prompt;
-    const imageField = modelInfo?.imageField || 'image_url';
-    const imagesList = params.images_list?.length > 0 ? params.images_list : (params.image_url ? [params.image_url] : null);
-    if (imagesList) {
-        if (imageField === 'images_list') payload.images_list = imagesList;
-        else payload[imageField] = imagesList[0];
-    }
-    if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
-    if (params.resolution) payload.resolution = params.resolution;
-    if (params.quality) payload.quality = params.quality;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 60);
+  const modelInfo = getI2IModelById(params.model);
+  const endpoint = resolveFalEndpoint(params.model) || resolveFalEndpoint(modelInfo?.endpoint);
+  if (!endpoint) throw notSupported(params.model, 'i2i');
+
+  const input = {};
+  if (params.prompt) input.prompt = params.prompt;
+  if (params.aspect_ratio) input.image_size = aspectToImageSize(params.aspect_ratio);
+  if (params.seed && params.seed !== -1) input.seed = params.seed;
+
+  const imagesList = params.images_list?.length > 0
+    ? params.images_list
+    : (params.image_url ? [params.image_url] : null);
+
+  if (imagesList) {
+    // Different fal models expect different fields; try generic ones
+    input.image_url = imagesList[0];
+    if (imagesList.length > 1) input.image_urls = imagesList;
+  }
+
+  const result = await requestFal(endpoint, input, params.onRequestId);
+  return normalizeResult(result);
 }
+
+// ─── Video generation (text-to-video) ────────────────────────────────────────
 
 export async function generateVideo(apiKey, params) {
-    const modelInfo = getVideoModelById(params.model);
-    const endpoint = modelInfo?.endpoint || params.model;
-    const payload = {};
-    if (params.prompt) payload.prompt = params.prompt;
-    if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
-    if (params.duration) payload.duration = params.duration;
-    if (params.resolution) payload.resolution = params.resolution;
-    if (params.quality) payload.quality = params.quality;
-    if (params.mode) payload.mode = params.mode;
-    if (params.image_url) payload.image_url = params.image_url;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+  const modelInfo = getVideoModelById(params.model);
+  const endpoint = resolveFalEndpoint(params.model) || resolveFalEndpoint(modelInfo?.endpoint);
+  if (!endpoint) throw notSupported(params.model, 'video');
+
+  const input = {};
+  if (params.prompt) input.prompt = params.prompt;
+  if (params.aspect_ratio) input.aspect_ratio = params.aspect_ratio;
+  if (params.duration) input.duration = String(params.duration);
+  if (params.resolution) input.resolution = params.resolution;
+  if (params.image_url) input.image_url = params.image_url;
+
+  const result = await requestFal(endpoint, input, params.onRequestId);
+  return normalizeResult(result);
 }
+
+// ─── Image-to-Video ──────────────────────────────────────────────────────────
 
 export async function generateI2V(apiKey, params) {
-    const modelInfo = getI2VModelById(params.model);
-    const endpoint = modelInfo?.endpoint || params.model;
-    const payload = {};
-    if (params.prompt) payload.prompt = params.prompt;
-    const imageField = modelInfo?.imageField || 'image_url';
-    if (params.image_url) {
-        if (imageField === 'images_list') payload.images_list = [params.image_url];
-        else payload[imageField] = params.image_url;
-    }
-    if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
-    if (params.duration) payload.duration = params.duration;
-    if (params.resolution) payload.resolution = params.resolution;
-    if (params.quality) payload.quality = params.quality;
-    if (params.mode) payload.mode = params.mode;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+  const modelInfo = getI2VModelById(params.model);
+  const endpoint = resolveFalEndpoint(params.model) || resolveFalEndpoint(modelInfo?.endpoint);
+  if (!endpoint) throw notSupported(params.model, 'i2v');
+
+  const input = {};
+  if (params.prompt) input.prompt = params.prompt;
+  if (params.image_url) input.image_url = params.image_url;
+  if (params.aspect_ratio) input.aspect_ratio = params.aspect_ratio;
+  if (params.duration) input.duration = String(params.duration);
+  if (params.resolution) input.resolution = params.resolution;
+
+  const result = await requestFal(endpoint, input, params.onRequestId);
+  return normalizeResult(result);
 }
+
+// ─── Marketing Studio (advanced video with multiple refs) ────────────────────
 
 export async function generateMarketingStudioAd(apiKey, params) {
-    const endpoint = params.resolution === '1080p' ? 'sd-2-vip-omni-reference-1080p' : 'seedance-2-vip-omni-reference';
-    const payload = {
-        prompt: params.prompt,
-        aspect_ratio: params.aspect_ratio || '16:9',
-        duration: params.duration || 5,
-        images_list: params.images_list || [],
-        video_files: params.video_files || []
-    };
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+  // Seedance v1 Pro supports multiple reference images
+  const endpoint = 'fal-ai/bytedance/seedance/v1/pro/reference-to-video';
+  const input = {
+    prompt: params.prompt,
+    aspect_ratio: params.aspect_ratio || '16:9',
+    duration: String(params.duration || 5),
+    reference_image_urls: params.images_list || [],
+  };
+  const result = await requestFal(endpoint, input, params.onRequestId);
+  return normalizeResult(result);
 }
+
+// ─── Lip Sync ────────────────────────────────────────────────────────────────
 
 export async function processLipSync(apiKey, params) {
-    const modelInfo = getLipSyncModelById(params.model);
-    const endpoint = modelInfo?.endpoint || params.model;
-    const payload = {};
-    if (params.audio_url) payload.audio_url = params.audio_url;
-    if (params.image_url) payload.image_url = params.image_url;
-    if (params.video_url) payload.video_url = params.video_url;
-    if (params.prompt) payload.prompt = params.prompt;
-    if (params.resolution) payload.resolution = params.resolution;
-    if (params.seed !== undefined && params.seed !== -1) payload.seed = params.seed;
-    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+  const modelInfo = getLipSyncModelById(params.model);
+  const endpoint = resolveFalEndpoint(params.model) || resolveFalEndpoint(modelInfo?.endpoint) || 'fal-ai/sync-lipsync';
+
+  const input = {};
+  if (params.audio_url) input.audio_url = params.audio_url;
+  if (params.video_url) input.video_url = params.video_url;
+  if (params.image_url) input.image_url = params.image_url;
+  if (params.prompt) input.prompt = params.prompt;
+  if (params.seed !== undefined && params.seed !== -1) input.seed = params.seed;
+
+  const result = await requestFal(endpoint, input, params.onRequestId);
+  return normalizeResult(result);
 }
+
+// ─── File Upload ─────────────────────────────────────────────────────────────
+// fal.ai provides file upload via their storage service. We proxy this
+// through a dedicated server endpoint that uses fal.storage.upload().
+// For now, fallback: send file as base64 or use a public image hosting.
 
 export function uploadFile(apiKey, file, onProgress) {
-    return new Promise((resolve, reject) => {
-        const url = `${BASE_URL}/api/v1/upload_file`;
-        const formData = new FormData();
-        formData.append('file', file);
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Upload via our server — server uses fal.storage.upload under the hood
+      const formData = new FormData();
+      formData.append('file', file);
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', url);
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/fal-upload');
 
-        if (onProgress) {
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    const percentComplete = Math.round((event.loaded / event.total) * 100);
-                    onProgress(percentComplete);
-                }
-            };
-        }
-
-        xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                    const data = JSON.parse(xhr.responseText);
-                    const fileUrl = data.url || data.file_url || data.data?.url;
-                    if (!fileUrl) {
-                        reject(new Error('No URL returned from file upload'));
-                    } else {
-                        resolve(fileUrl);
-                    }
-                } catch (e) {
-                    reject(new Error('Failed to parse upload response'));
-                }
-            } else {
-                let detail = xhr.statusText;
-                try {
-                    const errObj = JSON.parse(xhr.responseText);
-                    detail = errObj.detail || detail;
-                } catch (e) {
-                    // fallback to statusText
-                }
-                reject(new Error(`File upload failed: ${xhr.status} - ${detail}`));
-            }
+      if (onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const pct = Math.round((event.loaded / event.total) * 100);
+            onProgress(pct);
+          }
         };
+      }
 
-        xhr.onerror = () => reject(new Error('Network error during file upload'));
-        xhr.send(formData);
-    });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            const url = data.url || data.file_url;
+            if (!url) reject(new Error('No URL returned from upload'));
+            else resolve(url);
+          } catch (e) {
+            reject(new Error('Failed to parse upload response'));
+          }
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(formData);
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
+
+// ─── Balance / Account ───────────────────────────────────────────────────────
+// fal.ai doesn't expose account balance via public API.
+// Return null so UI shows "---" or a link to the fal dashboard.
 
 export async function getUserBalance(apiKey) {
-    const response = await fetch(`${BASE_URL}/api/v1/account/balance`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch balance: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-}
-
-export async function getTemplateWorkflows(apiKey) {
-    const response = await fetch(`${BASE_URL}/workflow/get-template-workflows`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch template workflows: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function getUserWorkflows(apiKey) {
-    const response = await fetch(`${BASE_URL}/workflow/get-workflow-defs`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch user workflows: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function getPublishedWorkflows(apiKey) {
-    const response = await fetch(`${BASE_URL}/workflow/get-published-workflows`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch published workflows: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-// Agents — uses direct URL → https://api.muapi.ai/agents/...
-export async function getTemplateAgents(apiKey) {
-    const response = await fetch(`${BASE_URL}/agents/templates/agents`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch template agents: ${response.status} - ${errText.slice(0, 100)}`);
-    }
+  try {
+    const response = await fetch(`${BASE_URL}/balance`);
+    if (!response.ok) return { balance: null };
     const data = await response.json();
-    return Array.isArray(data) ? data : (data.agents || data.items || []);
-};
-
-export async function getUserAgents(apiKey) {
-    const response = await fetch(`${BASE_URL}/agents/user/agents`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch user agents: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    const data = await response.json();
-    return Array.isArray(data) ? data : (data.agents || data.items || []);
-};
-
-export async function getPublishedAgents(apiKey) {
-    // MuAPI: GET /agents/featured/agents
-    const response = await fetch(`${BASE_URL}/agents/featured/agents`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch featured agents: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    const data = await response.json();
-    return Array.isArray(data) ? data : (data.agents || data.items || []);
-};
-
-// GET /agents/user/conversations — returns the user's chat history across all agents
-export async function getUserConversations(apiKey) {
-    const response = await fetch(`${BASE_URL}/agents/user/conversations`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch conversations: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
-};
-
-export async function createWorkflow(apiKey, payload) {
-    const response = await fetch(`${BASE_URL}/workflow/create`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to create workflow: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function updateWorkflowName(apiKey, workflowId, name) {
-    const response = await fetch(`${BASE_URL}/workflow/update-name/${workflowId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name })
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to rename workflow: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function deleteWorkflow(apiKey, workflowId) {
-    const response = await fetch(`${BASE_URL}/workflow/delete-workflow-def/${workflowId}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to delete workflow: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function getWorkflowInputs(apiKey, workflowId) {
-    const response = await fetch(`${BASE_URL}/workflow/${workflowId}/api-inputs`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch workflow inputs: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function executeWorkflow(apiKey, workflowId, inputs) {
-    const response = await fetch(`${BASE_URL}/workflow/${workflowId}/api-execute`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ inputs })
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to execute workflow: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    const submitData = await response.json();
-    const runId = submitData.run_id || submitData.id;
-    if (!runId) return submitData;
-
-    // Poll for results
-    return await pollWorkflowResult(runId, apiKey);
-};
-
-async function pollWorkflowResult(runId, apiKey, maxAttempts = 900, interval = 2000) {
-    const pollUrl = `${BASE_URL}/workflow/run/${runId}/api-outputs`;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, interval));
-        try {
-            const response = await fetch(pollUrl, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            if (!response.ok) {
-                if (response.status >= 500) continue;
-                throw new Error(`Poll Failed: ${response.status}`);
-            }
-            const data = await response.json();
-            const status = data.status?.toLowerCase();
-            if (status === 'completed' || status === 'succeeded' || status === 'success') return data;
-            if (status === 'failed' || status === 'error') throw new Error(`Workflow failed: ${data.error || 'Unknown error'}`);
-        } catch (error) {
-            if (attempt === maxAttempts) throw error;
-        }
-    }
-    throw new Error('Workflow timed out after polling.');
-};
-
-export async function getAllNodeSchemas(apiKey, workflowId) {
-    const response = await fetch(`${BASE_URL}/workflow/${workflowId}/node-schemas`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch node schemas: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function getWorkflowData(apiKey, workflowId) {
-    const response = await fetch(`${BASE_URL}/workflow/get-workflow-def/${workflowId}`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch workflow data: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-};
-
-export async function getNodeSchemas(apiKey, workflowId) {
-    const response = await fetch(`${BASE_URL}/workflow/${workflowId}/api-node-schemas`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to fetch node schemas: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-}
-
-export async function runSingleNode(apiKey, workflowId, nodeId, payload) {
-    const response = await fetch(`${BASE_URL}/workflow/${workflowId}/node/${nodeId}/run`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to run single node: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-}
-
-export async function deleteNodeRun(apiKey, nodeRunId) {
-    const response = await fetch(`${BASE_URL}/workflow/node-run/${nodeRunId}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to delete node run: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-}
-
-export async function getNodeStatus(apiKey, runId) {
-    const response = await fetch(`${BASE_URL}/workflow/run/${runId}/status`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to get node status: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
-}
-
-/**
- * Handle proxy requests centralizing communication logic with MuAPI.
- * This is used by the server-side entry points (existing proxy routes).
- * NB: uses UPSTREAM_URL (direct to muapi.ai), NOT the client-side BASE_URL.
- */
-export async function handleProxyRequest(prefix, path, method, headers, body, apiKey) {
-    const url = `${UPSTREAM_URL}/${prefix}/${path}`;
-
-    const finalHeaders = new Headers(headers);
-    finalHeaders.delete('host');
-    finalHeaders.delete('connection');
-    finalHeaders.delete('content-length'); // Let fetch recalculate this for safety
-
-    if (apiKey) {
-        finalHeaders.set('x-api-key', apiKey);
-    }
-
-    try {
-        const response = await fetch(url, {
-            method,
-            headers: finalHeaders,
-            body: (method !== 'GET' && method !== 'HEAD') ? body : undefined,
-            redirect: 'follow',
-        });
-
-        const contentType = response.headers.get('Content-Type') || 'application/json';
-        const buffer = await response.arrayBuffer();
-
-        return {
-            status: response.status,
-            contentType,
-            data: buffer
-        };
-    } catch (error) {
-        console.error(`MuAPI Proxy error for ${url}:`, error);
-        throw error;
-    }
-}
-
-/**
- * A centralized handler for Next.js API routes or middleware.
- */
-export async function handleServerSideProxy(prefix, request, params, apiKey) {
-    try {
-        const slug = await params;
-        const pathSegments = slug.path || [];
-        const path = pathSegments.join('/');
-
-        const method = request.method;
-        let body = null;
-        if (method !== 'GET' && method !== 'HEAD') {
-            body = await request.arrayBuffer();
-        }
-
-        const { search } = new URL(request.url);
-        const pathWithSearch = search ? `${path}${search}` : path;
-
-        return await handleProxyRequest(
-            prefix,
-            pathWithSearch,
-            method,
-            request.headers,
-            body,
-            apiKey
-        );
-    } catch (error) {
-        console.error(`Server proxy failed:`, error);
-        throw error;
-    }
+    return { balance: data.balance };
+  } catch {
+    return { balance: null };
+  }
 }
 
 export async function calculateDynamicCost(apiKey, taskName, payload) {
-    const response = await fetch(`${BASE_URL}/api/v1/app/calculate_dynamic_cost`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ task_name: taskName, payload })
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Failed to calculate dynamic cost: ${response.status} - ${errText.slice(0, 100)}`);
-    }
-    return await response.json();
+  // fal has per-model prices (not dynamic). Return a stub — UI that uses this
+  // can treat null/undefined as "cost not available, proceed anyway".
+  return { cost: null, currency: 'USD' };
+}
+
+// ─── Workflow Builder (muapi-only, stubs) ────────────────────────────────────
+
+const workflowsNotSupported = 'Workflow Builder пока не поддерживается. Coming Soon!';
+
+export async function getTemplateWorkflows() { return []; }
+export async function getUserWorkflows() { return []; }
+export async function getPublishedWorkflows() { return []; }
+export async function getWorkflowInputs() { return null; }
+export async function getAllNodeSchemas() { return []; }
+export async function getWorkflowData() { return null; }
+export async function getNodeSchemas() { return []; }
+export async function getNodeStatus() { return { status: 'not_supported' }; }
+
+export async function createWorkflow() { throw new Error(workflowsNotSupported); }
+export async function updateWorkflowName() { throw new Error(workflowsNotSupported); }
+export async function deleteWorkflow() { throw new Error(workflowsNotSupported); }
+export async function executeWorkflow() { throw new Error(workflowsNotSupported); }
+export async function runSingleNode() { throw new Error(workflowsNotSupported); }
+export async function deleteNodeRun() { throw new Error(workflowsNotSupported); }
+
+// ─── Agents (muapi-only, stubs) ──────────────────────────────────────────────
+
+const agentsNotSupported = 'AI Agents пока не поддерживаются. Coming Soon!';
+
+export async function getTemplateAgents() { return []; }
+export async function getUserAgents() { return []; }
+export async function getPublishedAgents() { return []; }
+export async function getUserConversations() { return []; }
+
+// ─── Server-side helpers (used by legacy proxy routes — kept for compat) ─────
+// These are used by the old /api/muapi/* and /api/agents/* proxy routes which
+// still exist in the repo. They are not reached in the fal.ai architecture,
+// but we keep them to avoid import errors if something still calls them.
+
+export async function handleProxyRequest() {
+  throw new Error('muapi proxy disabled — migrated to fal.ai');
+}
+
+export async function handleServerSideProxy() {
+  throw new Error('muapi proxy disabled — migrated to fal.ai');
 }
