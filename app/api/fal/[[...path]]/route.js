@@ -82,6 +82,25 @@ async function handler(request, { params }) {
 
   inflight++;
 
+  // Log the request body (keys and value shape — prompt is truncated to avoid spam)
+  const bodyPreview = {};
+  for (const [k, v] of Object.entries(body)) {
+    if (k === 'prompt' && typeof v === 'string') {
+      bodyPreview[k] = v.length > 80 ? v.slice(0, 80) + '…' : v;
+    } else if (typeof v === 'object' && v !== null) {
+      bodyPreview[k] = JSON.stringify(v).slice(0, 120);
+    } else {
+      bodyPreview[k] = v;
+    }
+  }
+  logMetric({
+    t: new Date().toISOString(),
+    provider: 'fal',
+    endpoint,
+    event: 'request_received',
+    input: bodyPreview,
+  });
+
   try {
     // fal.subscribe does submit + polling + result retrieval
     // If it fails (API error, timeout, etc), throws with .status and .body
@@ -93,6 +112,15 @@ async function handler(request, { params }) {
     inflight--;
     const latency = Date.now() - start;
 
+    // Log output image dimensions if present — helps debug resolution issues
+    const firstImage = result?.images?.[0] || result?.image;
+    const outputInfo = firstImage ? {
+      width: firstImage.width || null,
+      height: firstImage.height || null,
+      file_size: firstImage.file_size || null,
+      url_host: firstImage.url ? new URL(firstImage.url).host : null,
+    } : null;
+
     logMetric({
       t: new Date().toISOString(),
       provider: 'fal',
@@ -100,6 +128,7 @@ async function handler(request, { params }) {
       status: 200,
       latency_ms: latency,
       inflight,
+      output: outputInfo,
     });
 
     return Response.json({

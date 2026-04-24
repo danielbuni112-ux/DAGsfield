@@ -164,49 +164,25 @@ export function resolveFalEndpoint(modelIdOrEndpoint) {
   return model?.fal_endpoint || null;
 }
 
-// Convert muapi aspect_ratio + resolution into fal's image_size parameter.
-// For default/HD → returns preset string (e.g. "landscape_16_9").
-// For 2K/4K      → returns custom object {width, height} so fal generates higher res.
+// Convert muapi aspect_ratio into fal's image_size preset string.
+// ALWAYS returns a preset string (never custom {width,height} object).
 //
-// Note: not all fal models accept custom {width,height} for image_size. Pro models
-// (Nano Banana Pro, Flux Pro Ultra, etc.) support it. Standard models cap at ~1.5MP.
+// Reasoning (verified empirically 2026-04-24 via curl tests):
+//   - Nano Banana Pro ignores `image_size: {width, height}` and always outputs 1024x1024.
+//   - Nano Banana Pro respects `resolution: "4K"` separately → outputs 4096x4096.
+//   - Other fal models accept image_size as preset reliably.
+// Therefore: aspect_ratio → image_size preset (aspect control),
+//            resolution    → separate `resolution` param (size control).
+//
+// The `resolution` argument is kept in the signature for backward-compat but unused.
 export function aspectToImageSize(aspect, resolution = null) {
-  const res = (resolution || '').toString().toLowerCase();
-
-  // 4K — custom pixel dimensions
-  if (res === '4k' || res === '2160p' || res === '3840') {
-    const map4K = {
-      '1:1':  { width: 2048, height: 2048 },
-      '16:9': { width: 3840, height: 2160 },
-      '9:16': { width: 2160, height: 3840 },
-      '4:3':  { width: 2880, height: 2160 },
-      '3:4':  { width: 2160, height: 2880 },
-      '21:9': { width: 3840, height: 1644 },
-    };
-    if (map4K[aspect]) return map4K[aspect];
-  }
-
-  // 2K / 1080p — custom pixel dimensions
-  if (res === '2k' || res === '1080p' || res === '1920') {
-    const map2K = {
-      '1:1':  { width: 1920, height: 1920 },
-      '16:9': { width: 1920, height: 1080 },
-      '9:16': { width: 1080, height: 1920 },
-      '4:3':  { width: 1440, height: 1080 },
-      '3:4':  { width: 1080, height: 1440 },
-      '21:9': { width: 1920, height: 822 },
-    };
-    if (map2K[aspect]) return map2K[aspect];
-  }
-
-  // Default / HD — fal preset string
   const map = {
     '1:1':  'square_hd',
     '16:9': 'landscape_16_9',
     '9:16': 'portrait_16_9',
     '4:3':  'landscape_4_3',
     '3:4':  'portrait_4_3',
-    '21:9': 'landscape_16_9',
+    '21:9': 'landscape_16_9', // fal has no 21:9 preset, use 16:9 as closest
   };
   return map[aspect] || 'square_hd';
 }
