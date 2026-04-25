@@ -1,0 +1,209 @@
+From: Plugtown DAGfield
+Subject: [PATCH] Add delete button + erase animation to ImageStudio results
+Applies-to: packages/studio/src/components/ImageStudio.jsx (sha 2161850)
+
+Adds:
+  • Third floating action button (корзина) below Fullscreen + Download
+  • White-line erase animation: горизонтальная линия со свечением
+    поднимается снизу вверх, изображение клипается синхронно
+  • POST /api/generations при каждой новой генерации (раньше история
+    жила только в localStorage — корзина без этого не работает)
+  • DELETE /api/generations/:id при клике на корзину
+  • react-hot-toast уведомление "Перенесено в корзину"
+
+Apply on VPS:
+  cd /root/DAGsfield
+  git checkout migrate-to-fal && git pull
+  git apply patches/0001-trash-button-imagestudio.patch
+  npm run build:studio
+  pm2 restart plugtown
+
+---
+diff --git a/packages/studio/src/components/ImageStudio.jsx b/packages/studio/src/components/ImageStudio.jsx
+--- a/packages/studio/src/components/ImageStudio.jsx
++++ b/packages/studio/src/components/ImageStudio.jsx
+@@ -1,6 +1,7 @@
+ "use client";
+
+ import { useState, useEffect, useRef, useCallback } from "react";
++import toast from "react-hot-toast";
+ import { generateImage, generateI2I, uploadFile } from "../muapi.js";
+ import {
+   t2iModels,
+@@ -29,6 +30,29 @@
+   }
+ }
+
++// Сохранить только что сделанную генерацию в БД (корзина работает по
++// серверным ID). Возвращает серверный id или null если запрос упал.
++async function persistGeneration(entry) {
++  try {
++    const res = await fetch("/api/generations", {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({
++        kind: entry.kind ?? "image",
++        model: entry.model,
++        prompt: entry.prompt || "(no prompt)",
++        params: { aspect_ratio: entry.aspect_ratio },
++        resultUrl: entry.url,
++      }),
++    });
++    if (!res.ok) return null;
++    const data = await res.json();
++    return data?.id ?? null;
++  } catch {
++    return null;
++  }
++}
++
+ // ─── UploadButton (inline picker) ───────────────────────────────────────────
+
+ function UploadButton({ apiKey, maxImages, onSelect, onClear, initialUrls = [] }) {
+@@ -872,6 +896,7 @@ export default function ImageStudio({
+   const [dropdownOpen, setDropdownOpen] = useState(null); // 'model' | 'ar' | 'quality' | null
+   const [generating, setGenerating] = useState(false);
+   const [generateError, setGenerateError] = useState(null);
++  const [deletingIds, setDeletingIds] = useState(() => new Set());
+   const [fullscreenUrl, setFullscreenUrl] = useState(null);
+
+   // ── Canvas / history state ──────────────────────────────────────────────
+@@ -1065,9 +1090,17 @@ export default function ImageStudio({
+             aspect_ratio: selectedAr,
+             timestamp: new Date().toISOString(),
+           };
+-          addToHistory(entry);
++          // Сохраняем в БД и подменяем клиентский id на серверный — это нужно
++          // чтобы кнопка "Удалить" умела позвать DELETE /api/generations/:id.
++          persistGeneration(entry).then((serverId) => {
++            if (!serverId) {
++              addToHistory(entry);
++              return;
++            }
++            addToHistory({ ...entry, id: serverId });
++          });
+           onGenerationComplete?.({
+             url: res.url,
+             model: selectedModelId,
+@@ -1082,6 +1115,30 @@ export default function ImageStudio({
+       setGenerating(false);
+     }
+   };
++
++  // ── Soft-delete: переместить в корзину с анимацией стирания ────────────
++  const handleSoftDelete = useCallback(async (entry) => {
++    if (!entry?.id) return;
++    if (deletingIds.has(entry.id)) return;
++
++    // 1. Запускаем анимацию (700ms)
++    setDeletingIds((prev) => new Set(prev).add(entry.id));
++
++    // 2. Параллельно стартуем DELETE-запрос
++    const apiPromise = fetch(`/api/generations/${entry.id}`, { method: "DELETE" });
++
++    // 3. Ждём окончание анимации, потом убираем карточку
++    await new Promise((r) => setTimeout(r, 720));
++    setLocalHistory((prev) => prev.filter((h) => h.id !== entry.id));
++    setDeletingIds((prev) => {
++      const next = new Set(prev);
++      next.delete(entry.id);
++      return next;
++    });
++
++    const res = await apiPromise.catch(() => null);
++    if (res && res.ok) toast.success("Перенесено в корзину");
++    else toast("Удалено локально (нет связи с сервером)", { icon: "⚠️" });
++  }, [deletingIds]);
+
+   const placeholderText =
+     uploadedImageUrls.length > 1
+@@ -1093,6 +1150,16 @@ export default function ImageStudio({
+   // ── Render ───────────────────────────────────────────────────────────────
+   return (
+     <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-hidden">
++      {/* Анимация удаления: белая горизонтальная линия со свечением
++          поднимается снизу вверх, изображение клипается синхронно. */}
++      <style>{`
++        @keyframes plugtown-erase-img {
++          from { clip-path: inset(0 0 0 0);   filter: brightness(1); }
++          to   { clip-path: inset(0 0 100% 0); filter: brightness(1.6); }
++        }
++        @keyframes plugtown-erase-line {
++          0%   { bottom: 0%;   opacity: 1; }
++          90%  { opacity: 1; }
++          100% { bottom: 100%; opacity: 0; }
++        }
++      `}</style>
+
+       {/* ── CENTRAL GALLERY AREA ── */}
+       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
+@@ -1100,18 +1167,28 @@ export default function ImageStudio({
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full pt-4 animate-fade-in-up">
+             {history.map((entry, idx) => (
+               <div
+                 key={entry.id || idx}
+                 className="relative group rounded-lg overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col"
+               >
++                {(() => { const isDeleting = deletingIds.has(entry.id); return (
++                <>
+                 <img
+                   src={entry.url}
+                   alt={entry.prompt?.substring(0, 30) || "Generated image"}
+-                  className="w-full aspect-square object-cover bg-black/40 cursor-pointer hover:opacity-80 transition-opacity"
++                  className={`w-full aspect-square object-cover bg-black/40 transition-opacity ${
++                    isDeleting ? "pointer-events-none" : "cursor-pointer hover:opacity-80"
++                  }`}
++                  style={isDeleting ? { animation: "plugtown-erase-img 700ms cubic-bezier(0.7,0,0.3,1) forwards" } : undefined}
+                   onClick={() => setFullscreenUrl(entry.url)}
+                 />
++                {isDeleting && (
++                  <div
++                    className="absolute inset-x-0 h-[3px] bg-white pointer-events-none z-30"
++                    style={{
++                      animation: "plugtown-erase-line 700ms cubic-bezier(0.7,0,0.3,1) forwards",
++                      boxShadow: "0 0 22px 8px rgba(255,255,255,0.9), 0 0 6px 1px rgba(255,255,255,1)",
++                    }}
++                  />
++                )}
+
+                 {/* Overlay actions */}
+-                <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
++                <div className={`absolute top-2 right-2 flex flex-col gap-2 transition-opacity ${
++                  isDeleting ? "opacity-0" : "opacity-0 group-hover:opacity-100"
++                }`}>
+                   <button
+                     type="button"
+                     title="Fullscreen"
+@@ -1140,6 +1217,21 @@
+                       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                     </svg>
+                   </button>
++                  <button
++                    type="button"
++                    title="Удалить (в корзину)"
++                    onClick={(e) => {
++                      e.stopPropagation();
++                      handleSoftDelete(entry);
++                    }}
++                    disabled={isDeleting}
++                    className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-red-500 hover:text-white transition-all border border-white/10 disabled:opacity-50"
++                  >
++                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
++                      <polyline points="3 6 5 6 21 6" />
++                      <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
++                      <path d="M10 11v6M14 11v6" />
++                      <path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2" />
++                    </svg>
++                  </button>
+                 </div>
+
+                 {/* Prompt & Details */}
+@@ -1156,6 +1248,8 @@
+                     <span className="text-[10px] text-white/40">{entry.aspect_ratio}</span>
+                   </div>
+                 </div>
++                </>
++                ); })()}
+               </div>
+             ))}
+           </div>
